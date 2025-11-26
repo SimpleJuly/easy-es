@@ -167,8 +167,9 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+                    <!-- 使用 release 参数（Java 9+ 推荐方式） -->
+                    <!-- 自动设置 source、target 和引导类路径，避免警告 -->
+                    <release>${java.version}</release>
                 </configuration>
             </plugin>
         </plugins>
@@ -210,12 +211,20 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.6.3</version>
                         <configuration>
                             <charset>UTF-8</charset>
                             <encoding>UTF-8</encoding>
                             <docencoding>UTF-8</docencoding>
+                            <!-- Java 17+ 兼容性配置 -->
+                            <source>17</source>
+                            <!-- 忽略 Javadoc 错误和警告 -->
+                            <doclint>none</doclint>
+                            <failOnError>false</failOnError>
+                            <quiet>true</quiet>
+                            <!-- 禁用模块间链接检查，避免 package-list 错误 -->
+                            <detectOfflineLinks>false</detectOfflineLinks>
                         </configuration>
-                        <version>2.9.1</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>

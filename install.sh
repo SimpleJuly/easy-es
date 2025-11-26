@@ -37,12 +37,24 @@ else
     echo -e "${YELLOW}将执行测试${NC}"
 fi
 
+# 询问是否跳过 Javadoc 生成
+read -p "是否跳过 Javadoc 生成? (Y/n): " skip_javadoc
+skip_javadoc=${skip_javadoc:-Y}
+
+if [[ $skip_javadoc =~ ^[Yy]$ ]]; then
+    SKIP_JAVADOC="-Dmaven.javadoc.skip=true"
+    echo -e "${YELLOW}将跳过 Javadoc 生成${NC}"
+else
+    SKIP_JAVADOC=""
+    echo -e "${YELLOW}将生成 Javadoc${NC}"
+fi
+
 echo ""
 echo -e "${YELLOW}开始执行 Maven 安装...${NC}"
 echo ""
 
-# 执行 Maven 安装
-mvn clean install $SKIP_TESTS
+# 执行 Maven 安装（使用多线程加速）
+mvn clean install $SKIP_TESTS $SKIP_JAVADOC -T 1C
 
 # 检查执行结果
 if [ $? -eq 0 ]; then

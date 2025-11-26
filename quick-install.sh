@@ -1,11 +1,14 @@
 #!/bin/bash
 
-# Easy-ES 快速本地安装脚本（跳过测试）
+# Easy-ES 快速本地安装脚本（跳过测试和文档生成）
 
-echo "🚀 开始快速安装 Easy-ES 到本地仓库（跳过测试）..."
+echo "🚀 开始快速安装 Easy-ES 到本地仓库（跳过测试和文档生成）..."
 echo ""
 
-mvn clean install -DskipTests -T 1C
+# -DskipTests: 跳过测试
+# -Dmaven.javadoc.skip=true: 跳过 Javadoc 生成
+# -T 1C: 使用多线程构建（每个 CPU 核心一个线程）
+mvn clean install -DskipTests -Dmaven.javadoc.skip=true -T 1C
 
 if [ $? -eq 0 ]; then
     echo ""
