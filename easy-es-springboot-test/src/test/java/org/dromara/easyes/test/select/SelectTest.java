@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -24,11 +24,41 @@ import java.util.Map;
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
-@Disabled
+//@Disabled
 @SpringBootTest(classes = TestEasyEsApplication.class)
 public class SelectTest {
     @Resource
     private DocumentMapper documentMapper;
+
+    @org.junit.jupiter.api.BeforeEach
+    public void init() {
+        if (!documentMapper.existsIndex("easyes_document")) {
+            documentMapper.createIndex();
+        }
+
+        if (documentMapper.selectById("5") == null) {
+            Document d1 = new Document();
+            d1.setEsId("5");
+            d1.setTitle("老汉");
+            d1.setContent("技术过硬");
+            d1.setCreator("吃饭");
+            documentMapper.insert(d1);
+        }
+
+        if (documentMapper.selectById("OmEQCIAB0E2Rzy0qHFNV") == null) {
+            Document d2 = new Document();
+            d2.setEsId("OmEQCIAB0E2Rzy0qHFNV");
+            d2.setTitle("测试数据1");
+            documentMapper.insert(d2);
+        }
+
+        if (documentMapper.selectById("UykMUX0BUP1SGucePGhx") == null) {
+            Document d3 = new Document();
+            d3.setEsId("UykMUX0BUP1SGucePGhx");
+            d3.setTitle("测试数据2");
+            documentMapper.insert(d3);
+        }
+    }
 
     @Test
     public void testSelect() {
@@ -93,7 +123,7 @@ public class SelectTest {
     public void testTrackTotalHits() {
         // 查询超过1w条时,trackTotalHits=true 会自动开启
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.limit(20000);
+        wrapper.limit(10000);
         List<Document> documents = documentMapper.selectList(wrapper);
         System.out.println(documents.size());
     }

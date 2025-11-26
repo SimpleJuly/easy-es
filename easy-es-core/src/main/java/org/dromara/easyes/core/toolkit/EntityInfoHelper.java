@@ -787,17 +787,10 @@ public class EntityInfoHelper {
         entityInfo.setReplicasNum(settings.replicasNum());
         entityInfo.setShardsNum(settings.shardsNum());
 
-        IndexSettings.Builder builder = entityInfo.getIndexSettings()
-                .numberOfReplicas(settings.replicasNum() + "")
-                .numberOfShards(settings.shardsNum() + "")
-                .maxResultWindow(settings.maxResultWindow());
-
-        if (StringUtils.isNotBlank(settings.refreshInterval())) {
-            builder.refreshInterval(a -> a.time(settings.refreshInterval()));
-        }
-
+        // 保存settings注解信息及provider 供后续创建索引时使用
+        entityInfo.setSettingsAnnotation(settings);
         ISettingsProvider provider = settings.settingsProvider().getDeclaredConstructor().newInstance();
-        provider.settings(builder);
+        entityInfo.setSettingsProvider(provider);
     }
 
     /**

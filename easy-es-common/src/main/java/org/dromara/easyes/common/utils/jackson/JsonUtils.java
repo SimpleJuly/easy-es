@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.introspect.AnnotationIntrospectorPair;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.dromara.easyes.common.utils.StringUtils;
 
 import java.io.IOException;
@@ -32,6 +33,7 @@ public class JsonUtils {
 
     public static JsonMapper base() {
         JsonMapper base = JsonMapper.builder()
+                .addModule(new JavaTimeModule())
                 // 反序列化时是否将一个对象封装成单元素数组
                 .configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true)
                 .configure(SerializationFeature.INDENT_OUTPUT, false)

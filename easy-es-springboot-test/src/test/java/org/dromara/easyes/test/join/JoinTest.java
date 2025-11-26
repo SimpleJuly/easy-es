@@ -17,7 +17,7 @@ import org.dromara.easyes.test.mapper.DocumentMapper;
 import org.junit.jupiter.api.*;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.List;
 
 /**
@@ -57,7 +57,10 @@ public class JoinTest {
     @Order(0)
     public void testCreateIndex() {
         // 0.前置操作 创建索引 需确保索引托管模式处于manual手动挡,若为自动挡则会冲突.
-        boolean success = documentMapper.createIndex();
+        boolean success = true;
+        if (!documentMapper.existsIndex("easyes_document")) {
+            success = documentMapper.createIndex();
+        }
         Assertions.assertTrue(success);
     }
 

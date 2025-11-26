@@ -122,6 +122,9 @@ public class IndexUtils {
             // 用户未指定的settings信息
             if (Objects.isNull(indexParam.getSettings())) {
                 IndexSettings.Builder settings = indexParam.getIndexSettings();
+                if (Objects.isNull(settings)) {
+                    settings = entityInfo.getIndexSettingsBuilder();
+                }
                 // 只要有其中一个字段加了忽略大小写,则在索引中创建此自定义配置,否则无需创建,不浪费资源
                 boolean ignoreCase = indexParam.getEsIndexParamList() != null && indexParam.getEsIndexParamList().stream()
                         .anyMatch(EsIndexParam::isIgnoreCase);
@@ -260,7 +263,7 @@ public class IndexUtils {
                     .timeout(x -> x.time(reindexTimeOutHours + "h"));
             // batchSize须小于等于maxResultWindow,否则es报错
             if (DEFAULT_MAX_RESULT_WINDOW > maxResultWindow) {
-                a.size(maxResultWindow.longValue());
+                a.maxDocs(maxResultWindow.longValue());
             }
             return a;
         });
@@ -989,7 +992,7 @@ public class IndexUtils {
         Optional.ofNullable(entityInfo.getReleaseIndexName()).ifPresent(createIndexParam::setIndexName);
 
         // settingsMap
-        Optional.ofNullable(entityInfo.getIndexSettings()).ifPresent(createIndexParam::setIndexSettings);
+        Optional.ofNullable(entityInfo.getIndexSettingsBuilder()).ifPresent(createIndexParam::setIndexSettings);
 
         return createIndexParam;
     }

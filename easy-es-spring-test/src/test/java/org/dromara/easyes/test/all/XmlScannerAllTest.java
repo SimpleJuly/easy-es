@@ -33,7 +33,7 @@ import org.junit.jupiter.api.*;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -428,7 +428,7 @@ public class XmlScannerAllTest {
         SearchResponse<Document> response = documentMapper.search(wrapper);
         Aggregate aggregate = response.aggregations().get("starNumTerms");
         LongTermsBucket bucket = aggregate.lterms().buckets().array().get(0);
-        Assertions.assertTrue(bucket.key().equals("1") && bucket.docCount() == 2L);
+        Assertions.assertTrue(bucket.key() == 1L && bucket.docCount() == 2L);
     }
 
     @Test
@@ -915,11 +915,11 @@ public class XmlScannerAllTest {
         // 向量查询, 查询条件构造
         Query query = Query.of(a -> a.scriptScore(b -> b
                 .query(QueryBuilders.matchAll().build()._toQuery())
-                .script(d -> d.inline(e -> e
+                .script(d -> d
                         .lang("painless")
                         .params("vector", JsonData.of(new double[]{0.39684247970581055, 0.7687071561813354, 0.5145490765571594}))
                         .source("cosineSimilarity(params.vector, 'vector') + 1.0")
-                ))
+                )
         ));
         SearchRequest.Builder searchSourceBuilder = new SearchRequest.Builder();
         searchSourceBuilder.query(query);
@@ -937,7 +937,7 @@ public class XmlScannerAllTest {
         RequestOptions.Builder builder = RequestOptions.DEFAULT.toBuilder();
         builder.setHttpAsyncResponseConsumerFactory(
                 new HttpAsyncResponseConsumerFactory.HeapBufferedResponseConsumerFactory(4 * 104857600));
-        Boolean success = documentMapper.setRequestOptions(new RestClientOptions(builder.build()));
+        Boolean success = documentMapper.setRequestOptions(new RestClientOptions(builder.build(), true));
         Assertions.assertTrue(success);
     }
 

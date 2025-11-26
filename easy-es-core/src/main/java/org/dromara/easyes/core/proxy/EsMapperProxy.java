@@ -127,7 +127,11 @@ public class EsMapperProxy<T> implements InvocationHandler, Serializable {
 
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            return method.invoke(baseEsMapperInstance, args);
+            try {
+                return method.invoke(baseEsMapperInstance, args);
+            } catch (InvocationTargetException e) {
+                throw e.getTargetException();
+            }
         }
     }
 

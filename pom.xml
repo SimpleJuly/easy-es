@@ -6,7 +6,7 @@
 
     <groupId>org.dromara.easy-es</groupId>
     <artifactId>easy-es</artifactId>
-    <version>3.0.0</version>
+    <version>3.1.0</version>
 
     <name>easy-es</name>
     <description>easy use for elastic search</description>
@@ -21,8 +21,8 @@
     </modules>
 
     <properties>
-        <junit.version>5.4.0</junit.version>
-        <spring-boot.version>2.7.17</spring-boot.version>
+        <junit.version>5.11.0</junit.version>
+        <spring-boot.version>3.5.7</spring-boot.version>
         <solon.version>3.0.5</solon.version>
         <commons-lang3>3.9</commons-lang3>
     </properties>

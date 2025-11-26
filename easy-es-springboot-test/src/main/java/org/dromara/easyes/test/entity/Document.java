@@ -47,12 +47,12 @@ public class Document extends BaseJoin {
      * 文档内容,指定了类型及存储/查询分词器
      */
     @HighLight(mappingField = "highlightContent", fragmentSize = 10, numberOfFragments = 2, requireFieldMatch = false, preTag = "<em>", postTag = "</em>")
-    @IndexField(fieldType = FieldType.TEXT, analyzer = Analyzer.IK_SMART, searchAnalyzer = Analyzer.IK_SMART)
+    @IndexField(fieldType = FieldType.TEXT, analyzer = Analyzer.STANDARD, searchAnalyzer = Analyzer.STANDARD)
     private String content;
     /**
      * 作者 加@TableField注解,并指明strategy = FieldStrategy.NOT_EMPTY 表示更新的时候的策略为 创建者不为空字符串时才更新
      */
-    @IndexField(strategy = FieldStrategy.NOT_EMPTY, fieldType = FieldType.KEYWORD_TEXT, analyzer = Analyzer.IK_SMART)
+    @IndexField(strategy = FieldStrategy.NOT_EMPTY, fieldType = FieldType.KEYWORD_TEXT, analyzer = Analyzer.STANDARD)
     private String creator;
     /**
      * 可以聚合的text类型,字段名字随便取,注解中指定fieldData=true后text类型也可以支持聚合
@@ -88,7 +88,7 @@ public class Document extends BaseJoin {
      * 自定义字段名称
      */
     @HighLight(preTag = "<nb>", postTag = "</nb>")
-    @IndexField(value = "wu-la", fieldType = FieldType.TEXT, analyzer = Analyzer.IK_SMART, searchAnalyzer = Analyzer.IK_SMART)
+    @IndexField(value = "wu-la", fieldType = FieldType.TEXT, analyzer = Analyzer.STANDARD, searchAnalyzer = Analyzer.STANDARD)
     private String customField;
 
     /**
@@ -143,8 +143,8 @@ public class Document extends BaseJoin {
      */
     @HighLight
     @MultiIndexField(mainIndexField = @IndexField(fieldType = FieldType.KEYWORD),
-            otherIndexFields = {@InnerIndexField(suffix = "zh", fieldType = FieldType.TEXT, analyzer = Analyzer.IK_SMART),
-                    @InnerIndexField(suffix = "pinyin", fieldType = FieldType.TEXT, analyzer = Analyzer.PINYIN)})
+            otherIndexFields = {@InnerIndexField(suffix = "zh", fieldType = FieldType.TEXT, analyzer = Analyzer.STANDARD),
+                    @InnerIndexField(suffix = "pinyin", fieldType = FieldType.TEXT, analyzer = Analyzer.STANDARD)})
     private String multiField;
     /**
      * 英文名

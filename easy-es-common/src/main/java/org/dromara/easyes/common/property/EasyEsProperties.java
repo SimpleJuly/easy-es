@@ -64,6 +64,10 @@ public class EasyEsProperties {
      */
     private Integer connectionRequestTimeout;
     /**
+     * maxRetryTimeoutMillis 最大重试超时时间 单位毫秒
+     */
+    private Integer maxRetryTimeoutMillis = 30000;
+    /**
      * global config 全局配置
      */
     private GlobalConfig globalConfig = new GlobalConfig();

@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.List;
 
 /**
@@ -52,11 +52,11 @@ public class VectorTest {
     public void testVectorSearch() {
         Query query = Query.of(a -> a.scriptScore(b -> b
                 .query(QueryBuilders.matchAll().build()._toQuery())
-                .script(d -> d.inline(e -> e
+                .script(d -> d
                         .lang("painless")
                         .params("vector", JsonData.of(new double[]{0.39684247970581055, 0.7687071561813354, 0.5145490765571594}))
                         .source("cosineSimilarity(params.vector, 'vector') + 1.0")
-                ))
+                )
         ));
 
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();

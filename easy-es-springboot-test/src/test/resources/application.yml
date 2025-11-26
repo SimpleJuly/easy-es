@@ -1,10 +1,10 @@
 easy-es:
   #  enable: true
-  address: 10.18.2.45:9200
-  compatible: true
+  address: 127.0.0.1:9200
+  compatible: false
   #  schema: http
-#  username: elastic
-#  password: mg123456
+  username: elastic
+  password: 123456
   keep-alive-millis: 18000
   global-config:
     i-kun-mode: false

@@ -26,8 +26,8 @@ public class User {
     @HighLight(mappingField = "highlightUsername")
     @MultiIndexField(mainIndexField = @IndexField("user_name"),
     otherIndexFields = {
-            @InnerIndexField(suffix = "ik", fieldType = FieldType.TEXT, analyzer = Analyzer.IK_MAX_WORD),
-            @InnerIndexField(suffix = "py", fieldType = FieldType.TEXT, analyzer = Analyzer.PINYIN)
+            @InnerIndexField(suffix = "ik", fieldType = FieldType.TEXT, analyzer = Analyzer.STANDARD),
+            @InnerIndexField(suffix = "py", fieldType = FieldType.TEXT, analyzer = Analyzer.STANDARD)
     })
     private String username;
     /**

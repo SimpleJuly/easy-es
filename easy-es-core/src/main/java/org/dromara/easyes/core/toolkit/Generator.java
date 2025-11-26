@@ -44,7 +44,8 @@ public abstract class Generator {
         if (mapping == null) {
             return;
         }
-        Map<String, Map> map = JsonUtils.toMap(mapping.build().toString(), String.class, Map.class);
+        String json = PrintUtils.toJsonString(mapping.build(), client._transport().jsonpMapper());
+        Map<String, Map> map = JsonUtils.toMap(json, String.class, Map.class);
 
         // parse fields info
         Map<String, Map<String, Object>> properties = (Map<String, Map<String, Object>>) map.get(PROPERTIES);

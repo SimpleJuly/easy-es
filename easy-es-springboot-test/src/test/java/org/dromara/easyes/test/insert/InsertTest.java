@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -20,7 +20,7 @@ import java.util.List;
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
-@Disabled
+//@Disabled
 @SpringBootTest(classes = TestEasyEsApplication.class)
 public class InsertTest {
     @Resource
@@ -28,6 +28,10 @@ public class InsertTest {
 
     @Test
     public void testInsert() {
+        if (documentMapper.existsIndex("easyes_document")) {
+            documentMapper.deleteIndex("easyes_document");
+        }
+        documentMapper.createIndex();
         // 测试插入数据
         Document document = new Document();
         document.setEsId("5");

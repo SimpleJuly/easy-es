@@ -37,28 +37,28 @@ public class EsClientUtils {
 
     public static final String DEFAULT_DS = "DEFAULT_DS";
 
-    private final static Map<String, ElasticsearchClient> restHighLevelClientMap = new ConcurrentHashMap<>();
+    private final static Map<String, ElasticsearchClient> clientMap = new ConcurrentHashMap<>();
 
     public EsClientUtils() {
     }
 
-    public static ElasticsearchClient getElasticsearchClient(String restHighLevelClientId) {
-        if (DEFAULT_DS.equals(restHighLevelClientId)) {
-            return restHighLevelClientMap.values()
+    public static ElasticsearchClient getElasticsearchClient(String clientId) {
+        if (DEFAULT_DS.equals(clientId)) {
+            return clientMap.values()
                     .stream()
                     .findFirst()
-                    .orElseThrow(() -> ExceptionUtils.eee("Could not found ElasticsearchClient,restHighLevelClientId:%s", restHighLevelClientId));
+                    .orElseThrow(() -> ExceptionUtils.eee("Could not found ElasticsearchClient,clientId:%s", clientId));
         }
-        ElasticsearchClient client = restHighLevelClientMap.get(restHighLevelClientId);
+        ElasticsearchClient client = clientMap.get(clientId);
         if (client == null) {
-            LogUtils.formatError("restHighLevelClientId: %s can not find any data source, please check your config", restHighLevelClientId);
-            throw ExceptionUtils.eee("Cloud not found ElasticsearchClient,restHighLevelClientId:%s", restHighLevelClientId);
+            LogUtils.formatError("clientId: %s can not find any data source, please check your config", clientId);
+            throw ExceptionUtils.eee("Cloud not found ElasticsearchClient,clientId:%s", clientId);
         }
         return client;
     }
 
-    public static void registerClient(String restHighLevelClientId, Supplier<ElasticsearchClient> restHighLevelClient) {
-        EsClientUtils.restHighLevelClientMap.putIfAbsent(restHighLevelClientId, restHighLevelClient.get());
+    public static void registerClient(String clientId, Supplier<ElasticsearchClient> clientSupplier) {
+        EsClientUtils.clientMap.putIfAbsent(clientId, clientSupplier.get());
     }
 
     public static ElasticsearchClient buildClient(EasyEsProperties easyEsConfigProperties) {
@@ -85,8 +85,8 @@ public class EsClientUtils {
         builder.setHttpClientConfigCallback(httpClientBuilder -> {
             // 设置心跳时间,最大连接数,最大连接路由
             Optional.ofNullable(easyEsConfigProperties.getKeepAliveMillis()).ifPresent(p -> httpClientBuilder.setKeepAliveStrategy((response, context) -> p));
-            Optional.ofNullable(easyEsConfigProperties.getMaxConnTotal()).ifPresent(httpClientBuilder::setMaxConnTotal);
-            Optional.ofNullable(easyEsConfigProperties.getMaxConnPerRoute()).ifPresent(httpClientBuilder::setMaxConnPerRoute);
+            httpClientBuilder.setMaxConnTotal(Optional.ofNullable(easyEsConfigProperties.getMaxConnTotal()).orElse(100));
+            httpClientBuilder.setMaxConnPerRoute(Optional.ofNullable(easyEsConfigProperties.getMaxConnPerRoute()).orElse(100));
 
             // 设置账号密码
             String username = easyEsConfigProperties.getUsername();
@@ -146,11 +146,11 @@ public class EsClientUtils {
             // [media_type_header_exception] Invalid media-type value
             // on headers [Accept, Content-Type]
             // 通过拦截器编辑请求头以避免此错误！
-            request.setHeader("Accept", "application/json");
+            request.setHeader("Accept", "application/vnd.elasticsearch+json; compatible-with=8");
         });
         httpClientBuilder.setDefaultHeaders(new ArrayList<Header>() {{
-            add(new BasicHeader("Accept", "application/json"));
-            add(new BasicHeader("Content-Type", "application/json"));
+            add(new BasicHeader("Accept", "application/vnd.elasticsearch+json; compatible-with=8"));
+            add(new BasicHeader("Content-Type", "application/vnd.elasticsearch+json; compatible-with=8"));
             add(new BasicHeader("Connection", "Keep-Alive"));
             add(new BasicHeader("Charset", "UTF-8"));
         }});

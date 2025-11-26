@@ -1,9 +1,9 @@
 easy-es:
   #  enable: true
-  address: 192.168.0.18:9200
+  address: 127.0.0.1:9200
 #  schema: https
-#  username: elastic
-#  password: a2*HFkQU93mBnxOTaEAs
+  username: elastic
+  password: 123456
   keep-alive-millis: 18000
   global-config:
     i-kun-mode: false

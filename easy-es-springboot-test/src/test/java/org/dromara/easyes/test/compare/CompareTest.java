@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.io.IOException;
 import java.util.List;
 
@@ -32,7 +32,7 @@ public class CompareTest {
     @Autowired
     private ElasticsearchClient client;
 
-    public static RestClientOptions options = new RestClientOptions(RequestOptions.DEFAULT);
+    public static RestClientOptions options = new RestClientOptions(RequestOptions.DEFAULT, true);
 
     @Test
     public void testCompare() {

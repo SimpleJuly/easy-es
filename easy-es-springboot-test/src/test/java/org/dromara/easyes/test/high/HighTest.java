@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
@@ -171,7 +171,7 @@ public class HighTest {
         wrapper.match(Document::getContent, "技术");
         wrapper.sort(SortOptions.of(a -> a.script(b -> b
                 .type(ScriptSortType.Number)
-                .script(c -> c.inline(e -> e.source("Math.random()")))
+                .script(c -> c.source("Math.random()"))
         )));
         List<Document> documents = documentMapper.selectList(wrapper);
         System.out.println(documents);

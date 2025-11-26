@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,7 +24,7 @@ import java.util.List;
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
-@Disabled
+//@Disabled
 @SpringBootTest(classes = TestEasyEsApplication.class)
 public class UpdateTest {
     @Resource
@@ -36,6 +36,14 @@ public class UpdateTest {
         // case1: 已知id, 根据id更新 (为了演示方便,此id是从上一步查询中复制过来的,实际业务可以自行查询)
         String id = "5";
         String title1 = "隔壁老王";
+        
+        // 先插入一条数据，避免 document_missing_exception
+        Document insertDoc = new Document();
+        insertDoc.setEsId(id);
+        insertDoc.setTitle("old title");
+        insertDoc.setContent("old content");
+        documentMapper.insert(insertDoc);
+
         Document document1 = new Document();
         document1.setEsId(id);
         document1.setTitle(title1);
@@ -61,6 +69,19 @@ public class UpdateTest {
 
     @Test
     public void testBatchUpdateByIds() {
+        // 先插入数据
+        List<Document> insertList = new ArrayList<>();
+        Document d1 = new Document();
+        d1.setEsId("O2EQCIAB0E2Rzy0qHFNV");
+        d1.setTitle("init");
+        insertList.add(d1);
+
+        Document d2 = new Document();
+        d2.setEsId("OmEQCIAB0E2Rzy0qHFNV");
+        d2.setTitle("init");
+        insertList.add(d2);
+        documentMapper.insertBatch(insertList);
+
         List<Document> documentList = new ArrayList<>();
 
         Document document = new Document();

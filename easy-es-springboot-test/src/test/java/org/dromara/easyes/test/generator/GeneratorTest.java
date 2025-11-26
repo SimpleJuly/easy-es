@@ -5,10 +5,11 @@ import org.dromara.easyes.core.config.GeneratorConfig;
 import org.dromara.easyes.core.toolkit.Generator;
 import org.dromara.easyes.test.TestEasyEsApplication;
 import org.dromara.easyes.test.entity.Document;
+import org.dromara.easyes.test.mapper.DocumentMapper;
 import org.junit.jupiter.api.*;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.io.File;
 
 /**
@@ -22,6 +23,15 @@ import java.io.File;
 public class GeneratorTest {
     @Resource
     private Generator generator;
+    @Resource
+    private DocumentMapper documentMapper;
+
+    @BeforeEach
+    public void init() {
+        if (!documentMapper.existsIndex("easyes_document")) {
+            documentMapper.createIndex();
+        }
+    }
 
     /**
      * 测试根据已有索引生成领域模型

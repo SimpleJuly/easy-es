@@ -9,6 +9,9 @@ import org.dromara.easyes.annotation.rely.IdType;
 import org.dromara.easyes.annotation.rely.JoinField;
 import org.dromara.easyes.annotation.rely.RefreshPolicy;
 import org.dromara.easyes.common.constants.BaseEsConstants;
+import org.dromara.easyes.annotation.Settings;
+import org.dromara.easyes.annotation.rely.ISettingsProvider;
+import org.dromara.easyes.common.utils.StringUtils;
 import org.elasticsearch.client.RequestOptions;
 
 import java.lang.reflect.Field;
@@ -188,13 +191,41 @@ public class EntityInfo {
      */
     private final Map<String, Class<?>> pathClassMap = new HashMap<>();
     /**
-     * 通过自定义注解指定的索引settings
+     * Settings注解信息
      */
-    private final IndexSettings.Builder indexSettings = new IndexSettings.Builder();
+    private Settings settingsAnnotation;
+    /**
+     * Settings提供者
+     */
+    private ISettingsProvider settingsProvider;
+
+    /**
+     * 获取新的IndexSettings.Builder
+     *
+     * @return builder
+     */
+    public IndexSettings.Builder getIndexSettingsBuilder() {
+        IndexSettings.Builder builder = new IndexSettings.Builder();
+        builder.numberOfReplicas(this.replicasNum + "")
+                .numberOfShards(this.shardsNum + "")
+                .maxResultWindow(this.maxResultWindow);
+
+        if (this.settingsAnnotation != null) {
+            if (StringUtils.isNotBlank(this.settingsAnnotation.refreshInterval())) {
+                builder.refreshInterval(a -> a.time(this.settingsAnnotation.refreshInterval()));
+            }
+        }
+
+        if (this.settingsProvider != null) {
+            this.settingsProvider.settings(builder);
+        }
+        return builder;
+    }
+
     /**
      * 请求配置 默认值为官方内置的默认配置
      */
-    private TransportOptions requestOptions = new RestClientOptions(RequestOptions.DEFAULT);
+    private TransportOptions requestOptions = new RestClientOptions(RequestOptions.DEFAULT, true);
     /**
      * 最大返回数
      */

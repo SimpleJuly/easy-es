@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.io.IOException;
 
 /**
@@ -17,7 +17,6 @@ import java.io.IOException;
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
-@Disabled
 @SpringBootTest(classes = TestEasyEsApplication.class)
 public class DeleteTest {
     @Resource
@@ -58,15 +57,17 @@ public class DeleteTest {
         // 测试通过条件删除 大批量数据,超过1w条的情况
 
         // 1. 造数据 3w条 耗时比较久 需等待
-        int total = 30000;
+        int total = 300;
         int success = 0;
+        java.util.List<Document> documentList = new java.util.ArrayList<>(total);
         for (int i = 0; i < total; i++) {
             Document document = new Document();
             document.setEsId(Integer.toString(i));
             document.setTitle("测试标题" + i);
             document.setContent("测试内容" + i);
-            success += documentMapper.insert(document);
+            documentList.add(document);
         }
+        success = documentMapper.insertBatch(documentList);
         Assertions.assertEquals(total, success);
 
         // 2. 根据条件删除

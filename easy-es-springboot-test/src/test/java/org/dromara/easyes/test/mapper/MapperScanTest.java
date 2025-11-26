@@ -9,7 +9,7 @@ import org.dromara.easyes.test.mapper3.CommentMapper;
 import org.junit.jupiter.api.*;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 /**
  * @author MoJie

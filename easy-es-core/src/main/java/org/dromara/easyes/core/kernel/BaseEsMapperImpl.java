@@ -21,6 +21,7 @@ import co.elastic.clients.elasticsearch.indices.PutMappingRequest;
 import co.elastic.clients.elasticsearch.indices.RefreshRequest;
 import co.elastic.clients.elasticsearch.indices.RefreshResponse;
 import co.elastic.clients.elasticsearch.sql.QueryResponse;
+import co.elastic.clients.elasticsearch.sql.query.SqlFormat;
 import co.elastic.clients.json.JsonData;
 import co.elastic.clients.json.JsonpUtils;
 import co.elastic.clients.transport.TransportOptions;
@@ -168,7 +169,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         }
         PrintUtils.printSql(sql);
         String finalSql = sql;
-        QueryResponse response = client.sql().query(x -> x.query(finalSql).format("json"));
+        QueryResponse response = client.sql().query(x -> x.query(finalSql).format(SqlFormat.Json));
         return JsonpUtils.toString(response, new StringBuilder()).toString();
     }
 
@@ -901,7 +902,13 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
                     .index(indexName)
                     .routing(updateWrapper.routing)
                     .id(getId(item))
-                    .action(c -> c.doc(update))
+                    .action(c -> {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("doc", update);
+                        // updateWrapper更新模式下, 默认不需要doc_as_upsert, 因为是先查后改
+                        String json = JsonUtils.toJsonStr(map);
+                        return c.withJson(new java.io.StringReader(json));
+                    })
             ));
             operations.add(operation);
         }
@@ -932,12 +939,15 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
             BulkOperation operation = BulkOperation.of(a ->
                     a.update(b -> b
                             .id(updateRequest.id())
-                            .ifPrimaryTerm(updateRequest.ifPrimaryTerm())
-                            .ifSeqNo(updateRequest.ifSeqNo())
                             .index(updateRequest.index())
-                            .requireAlias(updateRequest.requireAlias())
-                            .retryOnConflict(updateRequest.retryOnConflict())
                             .routing(updateRequest.routing())
+                            .action(c -> {
+                                Map<String, Object> map = new HashMap<>();
+                                map.put("doc", e);
+                                map.put("doc_as_upsert", true);
+                                String json = JsonUtils.toJsonStr(map);
+                                return c.withJson(new java.io.StringReader(json));
+                            })
                     ));
             operations.add(operation);
         });

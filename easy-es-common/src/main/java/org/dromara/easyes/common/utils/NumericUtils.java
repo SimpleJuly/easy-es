@@ -21,6 +21,9 @@ public class NumericUtils {
      * @return 目标值
      */
     public static float setDecimalPlaces(float origin, int decimalPlaces) {
+        if (Float.isNaN(origin) || Float.isInfinite(origin)) {
+            return origin;
+        }
         return BigDecimal.valueOf(origin)
                 .setScale(decimalPlaces, RoundingMode.HALF_UP)
                 .floatValue();
@@ -34,6 +37,9 @@ public class NumericUtils {
      * @return 目标值
      */
     public static double setDecimalPlaces(double origin, int decimalPlaces) {
+        if (Double.isNaN(origin) || Double.isInfinite(origin)) {
+            return origin;
+        }
         return BigDecimal.valueOf(origin)
                 .setScale(decimalPlaces, RoundingMode.HALF_UP)
                 .doubleValue();

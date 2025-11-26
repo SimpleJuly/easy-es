@@ -32,7 +32,7 @@ import org.elasticsearch.geometry.Rectangle;
 import org.junit.jupiter.api.*;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -59,6 +59,9 @@ public class AllTest {
     @Order(0)
     public void testCreateIndex() {
         // 0.前置操作 创建索引 需确保索引托管模式处于manual手动挡,若为自动挡则会冲突.
+        if (documentMapper.existsIndex("easyes_document")) {
+            documentMapper.deleteIndex("easyes_document");
+        }
         boolean success = documentMapper.createIndex();
         Assertions.assertTrue(success);
     }
@@ -429,7 +432,7 @@ public class AllTest {
         SearchResponse<Document> response = documentMapper.search(wrapper);
         Aggregate aggregate = response.aggregations().get("starNumTerms");
         LongTermsBucket bucket = aggregate.lterms().buckets().array().get(0);
-        Assertions.assertTrue(bucket.key().equals("1") && bucket.docCount() == 2L);
+        Assertions.assertTrue(bucket.key() == 1L && bucket.docCount() == 2L);
     }
 
     @Test
@@ -827,7 +830,8 @@ public class AllTest {
     @Order(67)
     public void testPrefixQuery() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.prefixQuery(Document::getContent, "测试");
+        // standard分词器下,测试会被分为测,试,所以前缀查询测试无法匹配到任何结果,只能匹配测
+        wrapper.prefixQuery(Document::getContent, "测");
         List<Document> documents = documentMapper.selectList(wrapper);
         Assertions.assertEquals(22, documents.size());
     }
@@ -836,10 +840,10 @@ public class AllTest {
     @Order(68)
     public void testHighLight() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.match(Document::getContent, "测试")
+        wrapper.match(Document::getContent, "测")
                 .match(Document::getCustomField, "字段");
         List<Document> documents = documentMapper.selectList(wrapper);
-        Assertions.assertTrue(documents.get(0).getHighlightContent().contains("测试"));
+        Assertions.assertTrue(documents.get(0).getHighlightContent().contains("测"));
     }
 
     @Test
@@ -917,11 +921,11 @@ public class AllTest {
         // 向量查询, 查询条件构造
         Query query = Query.of(a -> a.scriptScore(b -> b
                 .query(QueryBuilders.matchAll().build()._toQuery())
-                .script(d -> d.inline(e -> e
+                .script(d -> d
                         .lang("painless")
                         .params("vector", JsonData.of(new double[]{0.39684247970581055, 0.7687071561813354, 0.5145490765571594}))
                         .source("cosineSimilarity(params.vector, 'vector') + 1.0")
-                ))
+                )
         ));
         SearchRequest.Builder searchSourceBuilder = new SearchRequest.Builder();
         searchSourceBuilder.query(query);
@@ -939,7 +943,7 @@ public class AllTest {
         RequestOptions.Builder builder = RequestOptions.DEFAULT.toBuilder();
         builder.setHttpAsyncResponseConsumerFactory(
                 new HttpAsyncResponseConsumerFactory.HeapBufferedResponseConsumerFactory(4 * 104857600));
-        Boolean success = documentMapper.setRequestOptions(new RestClientOptions(builder.build()));
+        Boolean success = documentMapper.setRequestOptions(new RestClientOptions(builder.build(), true));
         Assertions.assertTrue(success);
     }
 

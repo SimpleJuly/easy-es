@@ -141,58 +141,114 @@ public class WrapperProcessor {
                 break;
             case GT:
                 realField = getRealFieldAndSuffix(param.getColumn(), fieldTypeMap, mappingColumnMap, entityInfo);
-                query = Query.of(q -> q.range(p -> p
-                        .field(realField)
-                        .gt(JsonData.of(param.getVal()))
-                        .timeZone(param.getExt1() == null ? null : ((ZoneId) param.getExt1()).getId())
-                        .format((String)param.getExt2())
-                        .boost(param.getBoost())
-                ));
+                query = Query.of(q -> q.range(p -> {
+                    if (param.getExt1() != null || param.getExt2() != null) {
+                        p.date(d -> d
+                                .field(realField)
+                                .gt(param.getVal().toString())
+                                .timeZone(param.getExt1() == null ? null : ((ZoneId) param.getExt1()).getId())
+                                .format((String) param.getExt2())
+                                .boost(param.getBoost())
+                        );
+                    } else {
+                        p.term(t -> t
+                                .field(realField)
+                                .gt(param.getVal().toString())
+                                .boost(param.getBoost())
+                        );
+                    }
+                    return p;
+                }));
                 setBool(bool, query, param.getPrevQueryType());
                 break;
             case GE:
                 realField = getRealFieldAndSuffix(param.getColumn(), fieldTypeMap, mappingColumnMap, entityInfo);
-                query = Query.of(q -> q.range(p -> p
-                        .field(realField)
-                        .gte(JsonData.of(param.getVal()))
-                        .timeZone(param.getExt1() == null ? null : ((ZoneId) param.getExt1()).getId())
-                        .format((String)param.getExt2())
-                        .boost(param.getBoost())
-                ));
+                query = Query.of(q -> q.range(p -> {
+                    if (param.getExt1() != null || param.getExt2() != null) {
+                        p.date(d -> d
+                                .field(realField)
+                                .gte(param.getVal().toString())
+                                .timeZone(param.getExt1() == null ? null : ((ZoneId) param.getExt1()).getId())
+                                .format((String) param.getExt2())
+                                .boost(param.getBoost())
+                        );
+                    } else {
+                        p.term(t -> t
+                                .field(realField)
+                                .gte(param.getVal().toString())
+                                .boost(param.getBoost())
+                        );
+                    }
+                    return p;
+                }));
                 setBool(bool, query, param.getPrevQueryType());
                 break;
             case LT:
                 realField = getRealFieldAndSuffix(param.getColumn(), fieldTypeMap, mappingColumnMap, entityInfo);
-                query = Query.of(q -> q.range(p -> p
-                        .field(realField)
-                        .lt(JsonData.of(param.getVal()))
-                        .timeZone(param.getExt1() == null ? null : ((ZoneId) param.getExt1()).getId())
-                        .format((String)param.getExt2())
-                        .boost(param.getBoost())
-                ));
+                query = Query.of(q -> q.range(p -> {
+                    if (param.getExt1() != null || param.getExt2() != null) {
+                        p.date(d -> d
+                                .field(realField)
+                                .lt(param.getVal().toString())
+                                .timeZone(param.getExt1() == null ? null : ((ZoneId) param.getExt1()).getId())
+                                .format((String) param.getExt2())
+                                .boost(param.getBoost())
+                        );
+                    } else {
+                        p.term(t -> t
+                                .field(realField)
+                                .lt(param.getVal().toString())
+                                .boost(param.getBoost())
+                        );
+                    }
+                    return p;
+                }));
                 setBool(bool, query, param.getPrevQueryType());
                 break;
             case LE:
                 realField = getRealFieldAndSuffix(param.getColumn(), fieldTypeMap, mappingColumnMap, entityInfo);
-                query = Query.of(q -> q.range(p -> p
-                        .field(realField)
-                        .lte(JsonData.of(param.getVal()))
-                        .timeZone(param.getExt1() == null ? null : ((ZoneId) param.getExt1()).getId())
-                        .format((String)param.getExt2())
-                        .boost(param.getBoost())
-                ));
+                query = Query.of(q -> q.range(p -> {
+                    if (param.getExt1() != null || param.getExt2() != null) {
+                        p.date(d -> d
+                                .field(realField)
+                                .lte(param.getVal().toString())
+                                .timeZone(param.getExt1() == null ? null : ((ZoneId) param.getExt1()).getId())
+                                .format((String) param.getExt2())
+                                .boost(param.getBoost())
+                        );
+                    } else {
+                        p.term(t -> t
+                                .field(realField)
+                                .lte(param.getVal().toString())
+                                .boost(param.getBoost())
+                        );
+                    }
+                    return p;
+                }));
                 setBool(bool, query, param.getPrevQueryType());
                 break;
             case BETWEEN:
                 realField = getRealFieldAndSuffix(param.getColumn(), fieldTypeMap, mappingColumnMap, entityInfo);
-                query = Query.of(q -> q.range(p -> p
-                        .field(realField)
-                        .gte(JsonData.of(param.getExt1()))
-                        .lte(JsonData.of(param.getExt2()))
-                        .timeZone(param.getExt3() == null ? null : ((ZoneId) param.getExt3()).getId())
-                        .format((String)param.getExt4())
-                        .boost(param.getBoost())
-                ));
+                query = Query.of(q -> q.range(p -> {
+                    if (param.getExt3() != null || param.getExt4() != null) {
+                        p.date(d -> d
+                                .field(realField)
+                                .gte(param.getExt1().toString())
+                                .lte(param.getExt2().toString())
+                                .timeZone(param.getExt3() == null ? null : ((ZoneId) param.getExt3()).getId())
+                                .format((String) param.getExt4())
+                                .boost(param.getBoost())
+                        );
+                    } else {
+                        p.term(t -> t
+                                .field(realField)
+                                .gte(param.getExt1().toString())
+                                .lte(param.getExt2().toString())
+                                .boost(param.getBoost())
+                        );
+                    }
+                    return p;
+                }));
                 setBool(bool, query, param.getPrevQueryType());
                 break;
             case WILDCARD:
@@ -592,7 +648,7 @@ public class WrapperProcessor {
                 HighlightField field = HighlightField.of(x -> x
                         .preTags(highLightParam.getPreTag())
                         .postTags(highLightParam.getPostTag())
-                        .type(a -> a.custom(highLightParam.getHighLightType().getValue()))
+                        .type(highLightParam.getHighLightType().getValue())
                         .requireFieldMatch(highLightParam.getRequireFieldMatch())
                 );
                 highlightBuilder.fields(highlightField, field);

@@ -11,12 +11,13 @@ import org.dromara.easyes.core.conditions.select.LambdaEsQueryWrapper;
 import org.dromara.easyes.test.TestEasyEsApplication;
 import org.dromara.easyes.test.entity.Document;
 import org.dromara.easyes.test.mapper.DocumentMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.List;
 
 /**
@@ -40,6 +41,19 @@ import java.util.List;
 public class MixTest {
     @Resource
     private DocumentMapper documentMapper;
+
+    @BeforeEach
+    public void init() {
+        if (!documentMapper.existsIndex("easyes_document")) {
+            documentMapper.createIndex();
+            Document document = new Document();
+            document.setEsId("1");
+            document.setTitle("老汉");
+            document.setContent("推*");
+            document.setStarNum(1);
+            documentMapper.insert(document);
+        }
+    }
 
     /**
      * 正确使用姿势0(最实用)：EE满足的语法,直接用,不满足的可以构造原生QueryBuilder
@@ -97,7 +111,7 @@ public class MixTest {
         wrapper.sort(SortOptions.of(a -> a.script(b -> b
                 .type(ScriptSortType.Number)
                 .order(SortOrder.Desc)
-                .script(c -> c.inline(e -> e.source("doc['star_num'].value")))
+                .script(c -> c.source("doc['star_num'].value"))
         )));
         List<Document> documents = documentMapper.selectList(wrapper);
         System.out.println(documents);
@@ -134,7 +148,7 @@ public class MixTest {
         SearchRequest.Builder searchSourceBuilder = documentMapper.getSearchBuilder(wrapper);
 
         // ElasticsearchClient原生语法
-        searchSourceBuilder.aggregations("titleAgg", a -> a.terms(b -> b.field("title")));
+        searchSourceBuilder.aggregations("titleAgg", a -> a.terms(b -> b.field("title.keyword")));
         wrapper.setSearchBuilder(searchSourceBuilder);
         SearchResponse<Document> searchResponse = documentMapper.search(wrapper);
         // tip: 聚合后的信息是动态的,框架无法解析,需要用户根据聚合器类型自行从桶中解析,参考ElasticsearchClient官方Aggregation解析文档

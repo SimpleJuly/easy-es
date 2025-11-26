@@ -14,7 +14,7 @@ import org.elasticsearch.geometry.Rectangle;
 import org.junit.jupiter.api.*;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -38,6 +38,12 @@ public class FieldDataTest {
     @Test
     @Order(1)
     void testAutoCreateIndex() {
+        // manual模式下需要手动创建索引,否则自动创建的索引字段类型默认都是text,且fieldData为false,排序会报错
+        if (documentMapper.existsIndex("easyes_document")) {
+            documentMapper.deleteIndex("easyes_document");
+        }
+        documentMapper.createIndex();
+        
         // 测试插入数据
         Document document = new Document();
         document.setEsId("1");
