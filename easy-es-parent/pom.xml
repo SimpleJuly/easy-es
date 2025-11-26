@@ -165,7 +165,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
+                <version>3.14.1</version>
                 <configuration>
                     <!-- 使用 release 参数（Java 9+ 推荐方式） -->
                     <!-- 自动设置 source、target 和引导类路径，避免警告 -->
