@@ -46,6 +46,7 @@ public class EsAutoConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean
     public EasyEsConfiguration esConfiguration() {
         return new EasyEsConfiguration();
     }

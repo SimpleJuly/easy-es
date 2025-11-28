@@ -72,11 +72,17 @@ public class EasyEsConfiguration implements InitializingBean, EnvironmentAware {
         Map<String, EasyEsProperties> datasourceMap = this.easyEsDynamicProperties.getDatasource();
         if (datasourceMap.isEmpty()) {
             // 设置默认数据源,兼容不使用多数据源配置场景的老用户使用习惯
-            datasourceMap.put(EsClientUtils.DEFAULT_DS, this.easyEsProperties);
+            // 防御性检查：如果 easyEsProperties 为 null（enable=false 场景），不添加默认数据源
+            if (this.easyEsProperties != null) {
+                datasourceMap.put(EsClientUtils.DEFAULT_DS, this.easyEsProperties);
+            }
         }
         for (String key : datasourceMap.keySet()) {
             EasyEsProperties easyEsConfigProperties = datasourceMap.get(key);
-            EsClientUtils.registerClient(key, () -> EsClientUtils.buildClient(easyEsConfigProperties));
+            // 防御性检查：跳过 null 的配置
+            if (easyEsConfigProperties != null) {
+                EsClientUtils.registerClient(key, () -> EsClientUtils.buildClient(easyEsConfigProperties));
+            }
         }
         return esClientUtils;
     }
