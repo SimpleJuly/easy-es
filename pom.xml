@@ -6,7 +6,7 @@
 
     <groupId>org.dromara.easy-es</groupId>
     <artifactId>easy-es</artifactId>
-    <version>3.1.0</version>
+    <version>3.2.0</version>
 
     <name>easy-es</name>
     <description>easy use for elastic search</description>
