@@ -861,7 +861,7 @@ public class WrapperProcessor {
      * @param searchBuilder    查询参数建造者
      */
     private static void setSort(Wrapper<?> wrapper, Map<String, String> mappingColumnMap, EntityInfo entityInfo, SearchRequest.Builder searchBuilder) {
-        // 批量设置排序字段
+        // 批量设置排序字段 (含lambda指定的排序字段与以String形式指定的排序字段,按用户调用顺序生效)
         if (CollectionUtils.isNotEmpty(wrapper.baseSortParams)) {
             wrapper.baseSortParams.forEach(baseSortParam -> {
                 // 获取es中的实际字段 有可能已经被用户自定义或者驼峰转成下划线
@@ -871,33 +871,45 @@ public class WrapperProcessor {
                 Optional.ofNullable(sortBuilder).ifPresent(searchBuilder::sort);
             });
         }
+    }
 
-        // 设置以String形式指定的自定义排序字段及规则(此类排序通常由前端传入,满足部分用户个性化需求)
-        if (CollectionUtils.isNotEmpty(wrapper.orderByParams)) {
-            wrapper.orderByParams.forEach(orderByParam -> {
-                // 排序字段名
-                String orderColumn = orderByParam.getOrder();
-                // 获取配置是否开启了驼峰转换
-                if (GlobalConfigCache.getGlobalConfig().getDbConfig().isMapUnderscoreToCamelCase()) {
-                    orderColumn = StringUtils.camelToUnderline(orderColumn);
-                }
-                // 设置排序字段
-                FieldSort.Builder fieldSortBuilder = new FieldSort.Builder().field(orderColumn);
-
-                // 设置排序规则
-                if (SortOrder.Asc.toString().equalsIgnoreCase(orderByParam.getSort())) {
-                    fieldSortBuilder.order(SortOrder.Asc);
-                }
-                if (SortOrder.Desc.toString().equalsIgnoreCase(orderByParam.getSort())) {
-                    fieldSortBuilder.order(SortOrder.Desc);
-                }
-                // 设置排序模式
-                if (Objects.nonNull(orderByParam.getMode())) {
-                    fieldSortBuilder.mode(orderByParam.getMode());
-                }
-                searchBuilder.sort(x -> x.field(fieldSortBuilder.build()));
-            });
+    /**
+     * 获取以String形式指定的排序器(此类排序通常由前端传入,满足部分用户个性化需求)
+     *
+     * @param orderByParam 排序参数
+     * @return 排序器
+     */
+    private static SortOptions getStringSortBuilder(OrderByParam orderByParam) {
+        // 排序字段名
+        String orderColumn = orderByParam.getOrder();
+        // 获取配置是否开启了驼峰转换
+        if (GlobalConfigCache.getGlobalConfig().getDbConfig().isMapUnderscoreToCamelCase()) {
+            orderColumn = StringUtils.camelToUnderline(orderColumn);
         }
+
+        // _score得分排序,直接使用得分排序器,避免位置或语义错乱
+        if ("_score".equals(orderColumn)) {
+            SortOrder scoreOrder = SortOrder.Asc.toString().equalsIgnoreCase(orderByParam.getSort()) ?
+                    SortOrder.Asc : SortOrder.Desc;
+            return SortOptions.of(x -> x.score(y -> y.order(scoreOrder)));
+        }
+
+        // 设置排序字段
+        FieldSort.Builder fieldSortBuilder = new FieldSort.Builder().field(orderColumn);
+
+        // 设置排序规则
+        if (SortOrder.Asc.toString().equalsIgnoreCase(orderByParam.getSort())) {
+            fieldSortBuilder.order(SortOrder.Asc);
+        }
+        if (SortOrder.Desc.toString().equalsIgnoreCase(orderByParam.getSort())) {
+            fieldSortBuilder.order(SortOrder.Desc);
+        }
+        // 设置排序模式
+        if (Objects.nonNull(orderByParam.getMode())) {
+            fieldSortBuilder.mode(orderByParam.getMode());
+        }
+        FieldSort fieldSort = fieldSortBuilder.build();
+        return SortOptions.of(x -> x.field(fieldSort));
     }
 
 
@@ -912,6 +924,8 @@ public class WrapperProcessor {
         switch (baseSortParam.getOrderTypeEnum()) {
             case FIELD:
                 return SortOptions.of(x -> x.field(y -> y.field(realField).order(baseSortParam.getSortOrder())));
+            case STRING_FIELD:
+                return getStringSortBuilder(baseSortParam.getOrderByParam());
             case SCORE:
                 return SortOptions.of(x -> x.score(y -> y.order(baseSortParam.getSortOrder())));
             case GEO:
@@ -955,39 +969,57 @@ public class WrapperProcessor {
         }
 
         // 构建聚合树
-        String rootName = null;
-        Aggregation.Builder.ContainerBuilder root = null;
-        Aggregation.Builder.ContainerBuilder cursor = null;
+        // 管道聚合需自底向上构建: 新版es客户端builder.build()为快照,若先build挂到父节点再追加子聚合,子聚合会丢失
+        // 先按用户声明顺序收集各层级(terms聚合产生新层级,其余聚合作为当前层级的叶子节点)
+        List<AggregationParam> pipelineLevels = new ArrayList<>();
+        Map<Integer, List<AggregationParam>> levelLeaves = new HashMap<>();
         for (AggregationParam aggParam : aggregationParamList) {
-            String realField = getRealFieldAndSuffix(aggParam.getField(), mappingColumnMap, entityInfo);
-            Aggregation.Builder.ContainerBuilder builder = getRealAggregationBuilder(
-                    aggParam.getAggregationType(), realField, wrapper.size, wrapper.bucketOrders);
-            // 解决同一个字段聚合多次，如min(starNum), max(starNum) 字段名重复问题
-            String aggName = aggParam.getName() + aggParam.getAggregationType().getValue();
             if (aggParam.isEnablePipeline()) {
-                // 管道聚合, 构造聚合树
-                if (root == null) {
-                    root = builder;
-                    rootName = aggName;
-                    cursor = root;
+                // 解决max、min、avg和sum聚合函数不支持sub-aggregations的问题
+                boolean isTerms = AggregationTypeEnum.TERMS.equals(aggParam.getAggregationType());
+                if (pipelineLevels.isEmpty() || isTerms) {
+                    pipelineLevels.add(aggParam);
                 } else {
-                    Aggregation agg = builder.build();
-                    cursor.aggregations(aggName, agg);
-                    // 解决max、min、avg和sum聚合函数不支持sub-aggregations的问题
-                    if (agg._kind().equals(Aggregation.Kind.Terms)) {
-                        cursor = builder;
-                    }
+                    levelLeaves.computeIfAbsent(pipelineLevels.size() - 1, k -> new ArrayList<>()).add(aggParam);
                 }
             } else {
                 // 非管道聚合
+                String realField = getRealFieldAndSuffix(aggParam.getField(), mappingColumnMap, entityInfo);
+                Aggregation.Builder.ContainerBuilder builder = getRealAggregationBuilder(
+                        aggParam.getAggregationType(), realField, wrapper.size, wrapper.bucketOrders);
+                // 解决同一个字段聚合多次，如min(starNum), max(starNum) 字段名重复问题
+                String aggName = aggParam.getName() + aggParam.getAggregationType().getValue();
                 if (builder != null) {
                     searchSourceBuilder.aggregations(aggName, builder.build());
                 }
             }
-
         }
-        if (root != null) {
-            searchSourceBuilder.aggregations(rootName, root.build());
+
+        // 自底向上构建管道聚合树
+        Aggregation childAgg = null;
+        String childAggName = null;
+        for (int i = pipelineLevels.size() - 1; i >= 0; i--) {
+            AggregationParam aggParam = pipelineLevels.get(i);
+            String realField = getRealFieldAndSuffix(aggParam.getField(), mappingColumnMap, entityInfo);
+            Aggregation.Builder.ContainerBuilder builder = getRealAggregationBuilder(
+                    aggParam.getAggregationType(), realField, wrapper.size, wrapper.bucketOrders);
+            // 挂载当前层级的叶子聚合(如sum、avg等指标聚合)
+            for (AggregationParam leafParam : levelLeaves.getOrDefault(i, Collections.emptyList())) {
+                String leafField = getRealFieldAndSuffix(leafParam.getField(), mappingColumnMap, entityInfo);
+                Aggregation.Builder.ContainerBuilder leafBuilder = getRealAggregationBuilder(
+                        leafParam.getAggregationType(), leafField, wrapper.size, wrapper.bucketOrders);
+                String leafName = leafParam.getName() + leafParam.getAggregationType().getValue();
+                builder.aggregations(leafName, leafBuilder.build());
+            }
+            // 挂载下一层级聚合
+            if (childAgg != null) {
+                builder.aggregations(childAggName, childAgg);
+            }
+            childAgg = builder.build();
+            childAggName = aggParam.getName() + aggParam.getAggregationType().getValue();
+        }
+        if (childAgg != null) {
+            searchSourceBuilder.aggregations(childAggName, childAgg);
         }
 
         if (!GlobalConfigCache.getGlobalConfig().getDbConfig().isEnableAggHits()) {

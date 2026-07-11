@@ -47,4 +47,8 @@ public class BaseSortParam {
      * 排序坐标点
      */
     private List<GeoLocation> geoPoints;
+    /**
+     * 以String形式指定的排序字段及规则参数(排序字段和规则通常由前端传入),仅orderTypeEnum为STRING_FIELD时有值
+     */
+    private OrderByParam orderByParam;
 }

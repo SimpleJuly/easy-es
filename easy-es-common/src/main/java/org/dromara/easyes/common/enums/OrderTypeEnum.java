@@ -11,6 +11,10 @@ public enum OrderTypeEnum {
      */
     FIELD,
     /**
+     * 以String形式指定的排序字段及规则排序器(排序字段和规则通常由前端传入)
+     */
+    STRING_FIELD,
+    /**
      * 用户自定义的原生语法排序器
      */
     CUSTOMIZE,

@@ -412,8 +412,15 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
     @Override
     public Children orderBy(boolean condition, List<OrderByParam> orderByParams) {
-        if (CollectionUtils.isNotEmpty(orderByParams)) {
-            this.orderByParams = orderByParams;
+        if (condition && CollectionUtils.isNotEmpty(orderByParams)) {
+            // 转换为BaseSortParam统一存储,保证与orderByAsc/orderByDesc等排序的插入顺序一致
+            orderByParams.forEach(orderByParam -> {
+                BaseSortParam baseSortParam = BaseSortParam.builder()
+                        .orderTypeEnum(OrderTypeEnum.STRING_FIELD)
+                        .orderByParam(orderByParam)
+                        .build();
+                baseSortParams.add(baseSortParam);
+            });
         }
         return typedThis;
     }
@@ -822,7 +829,7 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
             } else if (NOT.equals(prev.getQueryTypeEnum())) {
                 // 上一节点是拼接not() 需要重置其prevQueryType类型,让其走must_not查询
                 param.setPrevQueryType(NESTED_NOT);
-            } else if (FILTER.equals(prev.getPrevQueryType())) {
+            } else if (FILTER.equals(prev.getQueryTypeEnum())) {
                 // 上一节点是拼接filter() 需要重置其prevQueryType类型,让其走filter查询
                 param.setPrevQueryType(NESTED_FILTER);
             }

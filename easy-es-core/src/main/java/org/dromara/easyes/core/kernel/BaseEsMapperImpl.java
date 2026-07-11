@@ -661,8 +661,28 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         boolean existsIndex = this.existsIndex(indexName);
         Assert.isTrue(existsIndex, String.format("update index: %s failed, because of this index not exists", indexName));
 
-        if (Objects.isNull(wrapper.mapping)) {
-            Assert.notEmpty(wrapper.esIndexParamList, String.format("update index: %s failed, because of empty update args", indexName));
+        // mapping、mapping字段参数、settings需至少指定其一
+        boolean hasMappingArgs = Objects.nonNull(wrapper.mapping) || CollectionUtils.isNotEmpty(wrapper.esIndexParamList);
+        boolean hasSettings = Objects.nonNull(wrapper.settings);
+        Assert.isTrue(hasMappingArgs || hasSettings,
+                String.format("update index: %s failed, because of empty update args", indexName));
+
+        // 仅更新settings场景
+        if (hasSettings) {
+            try {
+                co.elastic.clients.elasticsearch.indices.PutIndicesSettingsRequest putSettingsRequest =
+                        co.elastic.clients.elasticsearch.indices.PutIndicesSettingsRequest.of(a -> a
+                                .index(indexName)
+                                .settings(wrapper.settings.build()));
+                AcknowledgedResponse settingsResponse = client.withTransportOptions(getTransportOptions())
+                        .indices().putSettings(putSettingsRequest);
+                Assert.isTrue(settingsResponse.acknowledged(), String.format("update index settings failed, index: %s", indexName));
+            } catch (IOException e) {
+                throw ExceptionUtils.eee("update index settings exception", e);
+            }
+            if (!hasMappingArgs) {
+                return;
+            }
         }
 
         TypeMapping.Builder mapping = Objects.nonNull(wrapper.mapping) ? wrapper.mapping :
