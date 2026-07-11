@@ -23,24 +23,21 @@ public class IndexFalseTest {
     private DocumentMapper documentMapper;
 
     /**
-     * index为false时，无法搜索
+     * index为false时的搜索行为:
+     * ES 8.1之前: 抛异常 Cannot search on field [indexFalse] since it is not indexed
+     * ES 8.1及之后: keyword等类型若doc_values开启,支持基于doc values的查询(性能较低),不再抛异常
      */
     @Test
     void testIndexFalse() {
-//        documentMapper.deleteIndex("easyes_document");
-//        documentMapper.createIndex();
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.eq(Document::getIndexFalse, "777");
-        Exception exception = null;
         try {
-            documentMapper.selectList(wrapper);
+            // ES 8.1+ 走doc values查询,不抛异常,查询无命中
+            Assertions.assertTrue(documentMapper.selectList(wrapper).isEmpty());
         } catch (ElasticsearchException e) {
-            e.printStackTrace();
-            System.out.println(e.response());
-//            failed to create query: Cannot search on field [indexFalse] since it is not indexed
-            exception = e;
+            // 低版本ES: failed to create query: Cannot search on field [indexFalse] since it is not indexed
+            Assertions.assertNotNull(e);
         }
-        Assertions.assertNotNull(exception);
     }
 
     /**

@@ -5,10 +5,15 @@ All notable changes to this project will be documented in this file.
 ## [3.2.0] - 2026-07-11
 
 ### Upgraded
-- **Spring Boot**: Upgraded from `3.5.7` to `4.0.7` (Spring Framework `7.0.8`).
+- **Spring Boot**: Upgraded from `3.5.7` to `4.1.0` (Spring Framework `7.0.8`).
   - Compatible with Spring Boot 4.x's Jakarta EE 11 baseline.
   - Auto-configuration continues to register via `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`.
   - The library pins Jackson 2.x internally and is unaffected by Spring Boot 4's Jackson 3 default.
+- **JUnit Jupiter**: `5.11.0` → `6.0.3`, aligned with Spring Boot 4.1's managed version (mixing 5.x engine with Spring Test 7 causes `NoSuchMethodError`).
+
+### Verified
+- Integration test suite `AllTest` (81 tests) passes against a live Elasticsearch 9.0.3 with the 8.19.7 Java client under Spring Boot 4.1.0.
+- `IndexFalseTest` updated for ES 8.1+ behavior: querying an `index: false` keyword field with doc values no longer throws; it searches via doc values.
 
 ### Merged
 - Merged upstream `dromara/easy-es` v3.0.1 and v3.0.2:
