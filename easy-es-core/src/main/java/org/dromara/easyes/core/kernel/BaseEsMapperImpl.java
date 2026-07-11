@@ -941,13 +941,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
                             .id(updateRequest.id())
                             .index(updateRequest.index())
                             .routing(updateRequest.routing())
-                            .action(c -> {
-                                Map<String, Object> map = new HashMap<>();
-                                map.put("doc", e);
-                                map.put("doc_as_upsert", true);
-                                String json = JsonUtils.toJsonStr(map);
-                                return c.withJson(new java.io.StringReader(json));
-                            })
+                            .action(c->c.doc((updateRequest.doc())))
                     ));
             operations.add(operation);
         });
@@ -1407,18 +1401,33 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     private IndexRequest.Builder<T> buildIndexRequest(T entity, String routing, String parentId, String indexName) {
         IndexRequest.Builder<T> indexRequest = new IndexRequest.Builder<T>()
                 .routing(routing)
-                .index(indexName)
-                .document(entity);
-
+                .index(indexName);
         // id预处理,除下述情况,其它情况使用es默认的id
         EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
 
         if (IdType.UUID.equals(entityInfo.getIdType())) {
-            indexRequest.id(UUID.randomUUID().toString());
+            String uuid = UUID.randomUUID().toString();
+            indexRequest.id(uuid);
+            // 如果id需要存入_source
+            if (entityInfo.isId2Source()) {
+                try {
+                    entityInfo.getKeyField().set(entity, uuid);
+                } catch (IllegalAccessException e) {
+                    throw ExceptionUtils.eee(e);
+                }
+            }
         } else if (IdType.CUSTOMIZE.equals(entityInfo.getIdType())) {
-            indexRequest.id(getIdValue(entity));
+            String idValue = getIdValue(entity);
+            indexRequest.id(idValue);
+            if (entityInfo.isId2Source()) {
+                try {
+                    entityInfo.getKeyField().set(entity, idValue);
+                } catch (IllegalAccessException e) {
+                    throw ExceptionUtils.eee(e);
+                }
+            }
         }
-
+        indexRequest.document(entity);
         // 针对父子类型-追加joinField信息
         if (StringUtils.isNotBlank(entityInfo.getJoinAlias())) {
             if (!(entity instanceof BaseJoin)) {

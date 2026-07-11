@@ -58,6 +58,7 @@ public class AllTest {
     @Test
     @Order(0)
     public void testCreateIndex() {
+        documentMapper.deleteIndex();
         // 0.前置操作 创建索引 需确保索引托管模式处于manual手动挡,若为自动挡则会冲突.
         if (documentMapper.existsIndex("easyes_document")) {
             documentMapper.deleteIndex("easyes_document");
@@ -88,7 +89,7 @@ public class AllTest {
         document.setMultiField("葡萄糖酸钙口服溶液");
         document.setEnglish("Calcium Gluconate");
         document.setBigNum(new BigDecimal("66.66"));
-        document.setVector(new double[]{0.39684247970581666, 0.768707156181666, 0.5145490765571666});
+        document.setVectors(new double[]{0.39684247970581666, 0.768707156181666, 0.5145490765571666});
 //        System.out.println(JsonUtils.toJsonPrettyStr(document));
         int successCount = documentMapper.insert(document);
         Assertions.assertEquals(successCount, 1);
@@ -109,7 +110,7 @@ public class AllTest {
             Point point = new Point(13.400544 + i, 52.530286 + i);
             document.setGeoLocation(point.toString());
             document.setStarNum(i);
-            document.setVector(new double[]{35.89684247970581666, 86.268707156181666, 133.1145490765571666});
+            document.setVectors(new double[]{35.89684247970581666, 86.268707156181666, 133.1145490765571666});
             // 针对个别数据 造一些差异项 方便测试不同场景
             if (i == 2) {
                 document.setLocation("40.17836693398477,116.64002551005981");
@@ -923,8 +924,8 @@ public class AllTest {
                 .query(QueryBuilders.matchAll().build()._toQuery())
                 .script(d -> d
                         .lang("painless")
-                        .params("vector", JsonData.of(new double[]{0.39684247970581055, 0.7687071561813354, 0.5145490765571594}))
-                        .source("cosineSimilarity(params.vector, 'vector') + 1.0")
+                        .params("vectors", JsonData.of(new double[]{0.39684247970581055, 0.7687071561813354, 0.5145490765571594}))
+                        .source("cosineSimilarity(params.vectors, 'vectors') + 1.0")
                 )
         ));
         SearchRequest.Builder searchSourceBuilder = new SearchRequest.Builder();
@@ -986,25 +987,45 @@ public class AllTest {
     @Order(79)
     public void testComplex() {
         // SQL写法
-        // where business_type = 1 and (state = 9 or (state = 8 and bidding_sign = 1)) or (business_type = 2 and state in (2,3))
+        // where business_type = 1 and (state = 9 or (state = 8 and bidding_sign = 1)) or (business_type = 1 and state in (2,3))
 
         // ElasticsearchClient写法
-        List<FieldValue> values = Arrays.asList(WrapperProcessor.fieldValue(2), WrapperProcessor.fieldValue(3));
-        BoolQuery.Builder boolQueryBuilder = QueryBuilders.bool()
-                .must(a -> a.term(b -> b.field("business_type").value(1)))
-                .must(a -> a.bool(b -> b
-                        .must(c -> c.term(d -> d.field("state").value(9)))
-                        .should(c -> c.bool(d -> d
-                                .must(f -> f.term(e -> e.field("state").value(8)))
-                                .must(f -> f.term(e -> e.field("bidding_sign").value(1)))
+        // 创建 BoolQuery Builder
+        BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
+
+        // 第一个条件：business_type = 1 and (state = 9 or (state = 8 and bidding_sign = 1))
+        BoolQuery.Builder firstCondition = new BoolQuery.Builder()
+                .must(m -> m.term(t -> t.field("business_type").value(1)))
+                .must(m -> m.bool(b -> b
+                        .should(s -> s.term(t -> t.field("state").value(9)))
+                        .should(s -> s.bool(inner -> inner
+                                .must(mu -> mu.term(t -> t.field("state").value(8)))
+                                .must(mu -> mu.term(t -> t.field("bidding_sign").value(1)))
                         ))
-                ))
-                .should(a -> a.bool(c -> c
-                        .must(d -> d.term(e -> e.field("business_type").value(2)))
-                        .must(d -> d.terms(e -> e.field("state").terms(f -> f.value(values))))
+                        .minimumShouldMatch("1")
                 ));
 
-        Query query = boolQueryBuilder.build()._toQuery();
+        // 第二个条件：business_type = 1 and state in (2,3)
+        BoolQuery.Builder secondCondition = new BoolQuery.Builder()
+                .must(m -> m.term(t -> t.field("business_type").value(1)))
+                .must(m -> m.terms(te -> te
+                        .field("state")
+                        .terms(tv -> tv.value(Arrays.asList(
+                                FieldValue.of(2),
+                                FieldValue.of(3)
+                        )))
+                ));
+
+        // 最终查询：第一个条件 OR 第二个条件
+        boolQueryBuilder
+                .should(s -> s.bool(firstCondition.build()))
+                .should(s -> s.bool(secondCondition.build()))
+                .minimumShouldMatch("1");
+
+        // 构建查询
+        Query query = new Query.Builder()
+                .bool(boolQueryBuilder.build())
+                .build();
         System.out.println(query.toString());
         System.out.println("--------------------");
 
@@ -1012,13 +1033,15 @@ public class AllTest {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.eq("business_type", 1)
                 .and(a -> a.eq("state", 9).or(b -> b.eq("state", 8).eq("bidding_sign", 1)))
-                .or(i -> i.eq("business_type", 2).in("state", 2, 3));
+                .or(i -> i.eq("business_type", 1).in("state", 2, 3));
         SearchRequest.Builder searchBuilder = documentMapper.getSearchBuilder(wrapper);
         Query qry = searchBuilder.build().query();
         if (qry != null) {
             System.out.println(qry);
         }
-        List<Document> documents = documentMapper.selectList(wrapper);
+
+        Assertions.assertEquals(query.toString(), qry.toString());
     }
+
 
 }

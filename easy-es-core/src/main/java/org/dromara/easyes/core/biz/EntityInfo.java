@@ -193,35 +193,7 @@ public class EntityInfo {
     /**
      * Settings注解信息
      */
-    private Settings settingsAnnotation;
-    /**
-     * Settings提供者
-     */
-    private ISettingsProvider settingsProvider;
-
-    /**
-     * 获取新的IndexSettings.Builder
-     *
-     * @return builder
-     */
-    public IndexSettings.Builder getIndexSettingsBuilder() {
-        IndexSettings.Builder builder = new IndexSettings.Builder();
-        builder.numberOfReplicas(this.replicasNum + "")
-                .numberOfShards(this.shardsNum + "")
-                .maxResultWindow(this.maxResultWindow);
-
-        if (this.settingsAnnotation != null) {
-            if (StringUtils.isNotBlank(this.settingsAnnotation.refreshInterval())) {
-                builder.refreshInterval(a -> a.time(this.settingsAnnotation.refreshInterval()));
-            }
-        }
-
-        if (this.settingsProvider != null) {
-            this.settingsProvider.settings(builder);
-        }
-        return builder;
-    }
-
+    private IndexSettings indexSettings;
     /**
      * 请求配置 默认值为官方内置的默认配置
      */
@@ -255,6 +227,10 @@ public class EntityInfo {
      * 是否判定索引相同阶段
      */
     private boolean indexEqualStage;
+    /**
+     * 是否开启knn插件 - 默认开启,若未安装该插件则可临时配置关闭(不推荐,性能表现差)
+     */
+    private boolean enableKnnPlugin;
 
     /**
      * 获取需要进行查询的字段列表

@@ -59,10 +59,7 @@ public class IndexUtils {
      * index.analysis.normalizer.lowercase_normalizer.type值
      */
     private static final String CUSTOM;
-    /**
-     * 忽略index.analysis.normalizer.lowercase_normalizer.filter
-     */
-    private static final String LOWERCASE;
+
     /**
      * dims索引字段名
      */
@@ -82,7 +79,6 @@ public class IndexUtils {
         DEFAULT_IGNORE_ABOVE = 256;
         IGNORE_ABOVE_KEY = "ignore_above";
         CUSTOM = "custom";
-        LOWERCASE = "lowercase";
         DIMS_KEY = "dims";
         EAGER_GLOBAL_ORDINALS = "eager_global_ordinals";
         COPY_TO_KEY = "copy_to";
@@ -121,18 +117,7 @@ public class IndexUtils {
 
             // 用户未指定的settings信息
             if (Objects.isNull(indexParam.getSettings())) {
-                IndexSettings.Builder settings = indexParam.getIndexSettings();
-                if (Objects.isNull(settings)) {
-                    settings = entityInfo.getIndexSettingsBuilder();
-                }
-                // 只要有其中一个字段加了忽略大小写,则在索引中创建此自定义配置,否则无需创建,不浪费资源
-                boolean ignoreCase = indexParam.getEsIndexParamList() != null && indexParam.getEsIndexParamList().stream()
-                        .anyMatch(EsIndexParam::isIgnoreCase);
-                if (ignoreCase) {
-                    // 忽略大小写配置
-                    settings.analysis(b -> b.normalizer(LOWERCASE_NORMALIZER, c -> c.custom(d -> d.filter(LOWERCASE))));
-                }
-                x.settings(settings.build());
+                x.settings(indexParam.getIndexSettings());
             } else {
                 // 用户自定义settings
                 x.settings(indexParam.getSettings().build());
@@ -458,6 +443,10 @@ public class IndexUtils {
                 ByteNumberProperty property = ByteNumberProperty.of(a -> {
                     buildCopyTo(a, entityInfo.isIndexEqualStage(), indexParam.getCopyToList());
                     buildInnerFields(a, indexParam);
+                    // index和docValue为true时，在esMapping中默认不显示，如果这里直接设置为true，会导致
+                    // org.dromara.easyes.core.toolkit.PropertyComparator.isPropertyMapEqual返回false
+                    MyOptional.ofNullable(indexParam.getIndex()).ifFalse(a::index);
+                    MyOptional.ofNullable(indexParam.getDocValues()).ifFalse(a::docValues);
                     return a;
                 });
                 properties.put(fieldName, property._toProperty());
@@ -467,6 +456,8 @@ public class IndexUtils {
                 ShortNumberProperty property = ShortNumberProperty.of(a -> {
                     buildCopyTo(a, entityInfo.isIndexEqualStage(), indexParam.getCopyToList());
                     buildInnerFields(a, indexParam);
+                    MyOptional.ofNullable(indexParam.getIndex()).ifFalse(a::index);
+                    MyOptional.ofNullable(indexParam.getDocValues()).ifFalse(a::docValues);
                     return a;
                 });
                 properties.put(fieldName, property._toProperty());
@@ -476,6 +467,8 @@ public class IndexUtils {
                 IntegerNumberProperty property = IntegerNumberProperty.of(a -> {
                     buildCopyTo(a, entityInfo.isIndexEqualStage(), indexParam.getCopyToList());
                     buildInnerFields(a, indexParam);
+                    MyOptional.ofNullable(indexParam.getIndex()).ifFalse(a::index);
+                    MyOptional.ofNullable(indexParam.getDocValues()).ifFalse(a::docValues);
                     return a;
                 });
                 properties.put(fieldName, property._toProperty());
@@ -485,6 +478,8 @@ public class IndexUtils {
                 LongNumberProperty property = LongNumberProperty.of(a -> {
                     buildCopyTo(a, entityInfo.isIndexEqualStage(), indexParam.getCopyToList());
                     buildInnerFields(a, indexParam);
+                    MyOptional.ofNullable(indexParam.getIndex()).ifFalse(a::index);
+                    MyOptional.ofNullable(indexParam.getDocValues()).ifFalse(a::docValues);
                     return a;
                 });
                 properties.put(fieldName, property._toProperty());
@@ -494,6 +489,8 @@ public class IndexUtils {
                 FloatNumberProperty property = FloatNumberProperty.of(a -> {
                     buildCopyTo(a, entityInfo.isIndexEqualStage(), indexParam.getCopyToList());
                     buildInnerFields(a, indexParam);
+                    MyOptional.ofNullable(indexParam.getIndex()).ifFalse(a::index);
+                    MyOptional.ofNullable(indexParam.getDocValues()).ifFalse(a::docValues);
                     return a;
                 });
                 properties.put(fieldName, property._toProperty());
@@ -503,6 +500,8 @@ public class IndexUtils {
                 DoubleNumberProperty property = DoubleNumberProperty.of(a -> {
                     buildCopyTo(a, entityInfo.isIndexEqualStage(), indexParam.getCopyToList());
                     buildInnerFields(a, indexParam);
+                    MyOptional.ofNullable(indexParam.getIndex()).ifFalse(a::index);
+                    MyOptional.ofNullable(indexParam.getDocValues()).ifFalse(a::docValues);
                     return a;
                 });
                 properties.put(fieldName, property._toProperty());
@@ -512,6 +511,8 @@ public class IndexUtils {
                 HalfFloatNumberProperty property = HalfFloatNumberProperty.of(a -> {
                     buildCopyTo(a, entityInfo.isIndexEqualStage(), indexParam.getCopyToList());
                     buildInnerFields(a, indexParam);
+                    MyOptional.ofNullable(indexParam.getIndex()).ifFalse(a::index);
+                    MyOptional.ofNullable(indexParam.getDocValues()).ifFalse(a::docValues);
                     return a;
                 });
                 properties.put(fieldName, property._toProperty());
@@ -524,6 +525,8 @@ public class IndexUtils {
                     buildCopyTo(a, entityInfo.isIndexEqualStage(), indexParam.getCopyToList());
                     buildInnerFields(a, indexParam);
                     a.scalingFactor(scalingFactor);
+                    MyOptional.ofNullable(indexParam.getIndex()).ifFalse(a::index);
+                    MyOptional.ofNullable(indexParam.getDocValues()).ifFalse(a::docValues);
                     return a;
                 });
                 properties.put(fieldName, property._toProperty());
@@ -534,6 +537,8 @@ public class IndexUtils {
                     a.boost(indexParam.getBoost());
                     buildCopyTo(a, entityInfo.isIndexEqualStage(), indexParam.getCopyToList());
                     buildInnerFields(a, indexParam);
+                    MyOptional.ofNullable(indexParam.getIndex()).ifFalse(a::index);
+                    MyOptional.ofNullable(indexParam.getDocValues()).ifFalse(a::docValues);
                     return a;
                 });
                 properties.put(fieldName, property._toProperty());
@@ -541,10 +546,11 @@ public class IndexUtils {
             }
             if (FieldType.DATE.getType().equals(indexParam.getFieldType())) {
                 DateProperty property = DateProperty.of(a -> {
-                    a.boost(indexParam.getBoost());
+                    a.boost(indexParam.getBoost()).format(indexParam.getDateFormat());
                     buildCopyTo(a, entityInfo.isIndexEqualStage(), indexParam.getCopyToList());
                     buildInnerFields(a, indexParam);
-                    a.format(indexParam.getDateFormat());
+                    MyOptional.ofNullable(indexParam.getIndex()).ifFalse(a::index);
+                    MyOptional.ofNullable(indexParam.getDocValues()).ifFalse(a::docValues);
                     return a;
                 });
                 properties.put(fieldName, property._toProperty());
@@ -554,6 +560,7 @@ public class IndexUtils {
                 BinaryProperty property = BinaryProperty.of(a -> {
                     buildCopyTo(a, entityInfo.isIndexEqualStage(), indexParam.getCopyToList());
                     buildInnerFields(a, indexParam);
+                    MyOptional.ofNullable(indexParam.getDocValues()).ifFalse(a::docValues);
                     return a;
                 });
                 properties.put(fieldName, property._toProperty());
@@ -561,22 +568,23 @@ public class IndexUtils {
             }
             if (FieldType.KEYWORD.getType().equals(indexParam.getFieldType())) {
                 KeywordProperty property = KeywordProperty.of(a -> {
-                    a.boost(indexParam.getBoost());
+                    a.boost(indexParam.getBoost())
+                            .normalizer(indexParam.isIgnoreCase() ? LOWERCASE_NORMALIZER : null);
                     buildCopyTo(a, entityInfo.isIndexEqualStage(), indexParam.getCopyToList());
                     buildInnerFields(a, indexParam);
-                    a.normalizer(indexParam.isIgnoreCase() ? LOWERCASE_NORMALIZER : null);
+                    MyOptional.ofNullable(indexParam.getIndex()).ifFalse(a::index);
+                    MyOptional.ofNullable(indexParam.getDocValues()).ifFalse(a::docValues);
                     return a;
                 });
                 properties.put(fieldName, property._toProperty());
                 return;
             }
             if (FieldType.TEXT.getType().equals(indexParam.getFieldType())) {
-                int ignoreAbove = Optional.ofNullable(indexParam.getIgnoreAbove()).orElse(DEFAULT_IGNORE_ABOVE);
                 TextProperty property = TextProperty.of(a -> {
-                    a.boost(indexParam.getBoost());
                     a.boost(indexParam.getBoost());
                     buildCopyTo(a, entityInfo.isIndexEqualStage(), indexParam.getCopyToList());
                     buildInnerFields(a, indexParam);
+                    MyOptional.ofNullable(indexParam.getIndex()).ifFalse(a::index);
                     Optional.ofNullable(indexParam.getAnalyzer()).map(String::toLowerCase).ifPresent(a::analyzer);
                     Optional.ofNullable(indexParam.getSearchAnalyzer()).map(String::toLowerCase).ifPresent(a::searchAnalyzer);
                     MyOptional.ofNullable(indexParam.getFieldData()).ifTrue(a::fielddata);
@@ -591,9 +599,11 @@ public class IndexUtils {
                     a.boost(indexParam.getBoost());
                     buildCopyTo(a, entityInfo.isIndexEqualStage(), indexParam.getCopyToList());
                     buildInnerFields(a, indexParam);
+                    MyOptional.ofNullable(indexParam.getIndex()).ifFalse(a::index);
                     a.fields(FieldType.KEYWORD.getType(), c -> c
                             .keyword(d -> {
                                 d.ignoreAbove(ignoreAbove);
+                                MyOptional.ofNullable(indexParam.getIndex()).ifFalse(a::index);
                                 if (indexParam.isIgnoreCase()) {
                                     d.normalizer(LOWERCASE_NORMALIZER);
                                 }
@@ -613,6 +623,7 @@ public class IndexUtils {
                 WildcardProperty property = WildcardProperty.of(a -> {
                     buildCopyTo(a, entityInfo.isIndexEqualStage(), indexParam.getCopyToList());
                     buildInnerFields(a, indexParam);
+                    MyOptional.ofNullable(indexParam.getDocValues()).ifFalse(a::docValues);
                     return a;
                 });
                 properties.put(fieldName, property._toProperty());
@@ -653,6 +664,8 @@ public class IndexUtils {
                 GeoPointProperty property = GeoPointProperty.of(a -> {
                     buildCopyTo(a, entityInfo.isIndexEqualStage(), indexParam.getCopyToList());
                     buildInnerFields(a, indexParam);
+                    MyOptional.ofNullable(indexParam.getIndex()).ifFalse(a::index);
+                    MyOptional.ofNullable(indexParam.getDocValues()).ifFalse(a::docValues);
                     return a;
                 });
                 properties.put(fieldName, property._toProperty());
@@ -662,6 +675,7 @@ public class IndexUtils {
                 GeoShapeProperty property = GeoShapeProperty.of(a -> {
                     buildCopyTo(a, entityInfo.isIndexEqualStage(), indexParam.getCopyToList());
                     buildInnerFields(a, indexParam);
+                    MyOptional.ofNullable(indexParam.getDocValues()).ifFalse(a::docValues);
                     return a;
                 });
                 properties.put(fieldName, property._toProperty());
@@ -672,6 +686,8 @@ public class IndexUtils {
                     a.boost(indexParam.getBoost());
                     buildCopyTo(a, entityInfo.isIndexEqualStage(), indexParam.getCopyToList());
                     buildInnerFields(a, indexParam);
+                    MyOptional.ofNullable(indexParam.getIndex()).ifFalse(a::index);
+                    MyOptional.ofNullable(indexParam.getDocValues()).ifFalse(a::docValues);
                     return a;
                 });
                 properties.put(fieldName, property._toProperty());
@@ -681,6 +697,7 @@ public class IndexUtils {
                 CompletionProperty property = CompletionProperty.of(a -> {
                     buildCopyTo(a, entityInfo.isIndexEqualStage(), indexParam.getCopyToList());
                     buildInnerFields(a, indexParam);
+                    MyOptional.ofNullable(indexParam.getDocValues()).ifFalse(a::docValues);
                     Optional.ofNullable(indexParam.getAnalyzer()).map(String::toLowerCase).ifPresent(a::analyzer);
                     Optional.ofNullable(indexParam.getSearchAnalyzer()).map(String::toLowerCase).ifPresent(a::searchAnalyzer);
                     return a;
@@ -693,6 +710,8 @@ public class IndexUtils {
                     a.boost(indexParam.getBoost());
                     buildCopyTo(a, entityInfo.isIndexEqualStage(), indexParam.getCopyToList());
                     buildInnerFields(a, indexParam);
+                    MyOptional.ofNullable(indexParam.getIndex()).ifFalse(a::index);
+                    MyOptional.ofNullable(indexParam.getDocValues()).ifFalse(a::docValues);
                     return a;
                 });
                 properties.put(fieldName, property._toProperty());
@@ -713,6 +732,7 @@ public class IndexUtils {
                 DenseVectorProperty property = DenseVectorProperty.of(a -> {
                     Optional.ofNullable(indexParam.getDims()).ifPresent(a::dims);
                     buildInnerFields(a, indexParam);
+                    MyOptional.ofNullable(indexParam.getIndex()).ifFalse(a::index);
                     return a;
                 });
                 properties.put(fieldName, property._toProperty());
@@ -992,7 +1012,7 @@ public class IndexUtils {
         Optional.ofNullable(entityInfo.getReleaseIndexName()).ifPresent(createIndexParam::setIndexName);
 
         // settingsMap
-        Optional.ofNullable(entityInfo.getIndexSettingsBuilder()).ifPresent(createIndexParam::setIndexSettings);
+        Optional.ofNullable(entityInfo.getIndexSettings()).ifPresent(createIndexParam::setIndexSettings);
 
         return createIndexParam;
     }
@@ -1023,6 +1043,9 @@ public class IndexUtils {
                 esIndexParam.setScalingFactor(field.getScalingFactor());
                 esIndexParam.setDims(field.getDims());
                 esIndexParam.setCopyToList(field.getCopyToList());
+                esIndexParam.setIgnoreCase(field.isIgnoreCase());
+                esIndexParam.setIndex(field.getIndex());
+                esIndexParam.setDocValues(field.getDocValues());
 
                 // 嵌套类型
                 if (FieldType.NESTED.equals(field.getFieldType()) || FieldType.OBJECT.equals(field.getFieldType())) {
@@ -1038,8 +1061,6 @@ public class IndexUtils {
                         esIndexParam.setSearchAnalyzer(field.getSearchAnalyzer());
                     }
                 }
-                esIndexParam.setIgnoreCase(field.isIgnoreCase());
-
                 // 日期处理
                 Optional.ofNullable(dateFormatMap)
                         .flatMap(i -> Optional.ofNullable(i.get(field.getColumn())))
@@ -1096,7 +1117,7 @@ public class IndexUtils {
         TypeMapping.Builder builderFromIndex = esIndexInfo.getBuilder();
         Map<String, Property> propertiesOfEntity = builderFromEntity.build().properties();
         Map<String, Property> propertiesOfIndex = builderFromIndex.build().properties();
-        return !PropertyComparator.isPropertyMapEqual(propertiesOfEntity,propertiesOfIndex);
+        return !PropertyComparator.isPropertyMapEqual(propertiesOfEntity, propertiesOfIndex);
     }
 
     /**
