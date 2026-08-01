@@ -17,17 +17,22 @@
             <groupId>org.dromara.easy-es</groupId>
             <artifactId>easy-es-core</artifactId>
         </dependency>
+        <!-- Spring相关依赖统一使用provided作用域,由宿主应用提供,不向下游传递版本 -->
+        <!-- 否则本项目编译所用的Spring版本会污染使用方类路径,导致Spring Boot 3.x项目启动报错 -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-beans</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-aop</artifactId>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>

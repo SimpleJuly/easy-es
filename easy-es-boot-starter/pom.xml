@@ -21,9 +21,11 @@
             <groupId>org.dromara.easy-es</groupId>
             <artifactId>easy-es-spring</artifactId>
         </dependency>
+        <!-- 由宿主应用提供,不向下游传递版本,保证同时兼容Spring Boot 3.x与4.x -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-autoconfigure</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

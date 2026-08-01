@@ -11,8 +11,24 @@ All notable changes to this project will be documented in this file.
   - The library pins Jackson 2.x internally and is unaffected by Spring Boot 4's Jackson 3 default.
 - **JUnit Jupiter**: `5.11.0` → `6.0.3`, aligned with Spring Boot 4.1's managed version (mixing 5.x engine with Spring Test 7 causes `NoSuchMethodError`).
 
+### Fixed (dependency hygiene)
+- **Spring dependencies are now `provided` scope** in `easy-es-spring` and `easy-es-boot-starter`.
+  Previously they leaked at `compile` scope, so a consumer project that did not import the Spring Boot
+  BOM (or declared easy-es before `spring-boot-starter`) would pull Spring Framework `7.0.8` and
+  `spring-boot-autoconfigure` `4.1.0` into a Spring Boot 3.x application, failing at startup with
+  `Could not find class [org.springframework.boot.thread.Threading]`.
+  The same artifact now runs unmodified on both Spring Boot 3.x and 4.x.
+
+### Known limitation
+- Spring Boot 4.x manages `elasticsearch-client.version` to `9.4.2`, which switches the transport to
+  `elasticsearch-rest5-client` (Apache HttpClient 5) and is incompatible with this framework's
+  HttpClient 4 based client construction (`NoClassDefFoundError: org/apache/http/auth/Credentials`).
+  Spring Boot 4.x users must pin `<elasticsearch-client.version>8.19.7</elasticsearch-client.version>`
+  in their own `properties`. Native Elasticsearch Java Client 9.x support is not yet implemented.
+
 ### Verified
 - Integration test suite `AllTest` (81 tests) passes against a live Elasticsearch 9.0.3 with the 8.19.7 Java client under Spring Boot 4.1.0.
+- End-to-end consumer smoke tests: Spring Boot 3.5.7 with BOM, Spring Boot 3.5.7 without BOM (easy-es declared first), and Spring Boot 4.1.0 — all start the context, inject mappers, and reach a live Elasticsearch.
 - `IndexFalseTest` updated for ES 8.1+ behavior: querying an `index: false` keyword field with doc values no longer throws; it searches via doc values.
 
 ### Merged

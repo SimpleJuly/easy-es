@@ -118,8 +118,19 @@ Easy-Es是一款简化ElasticSearch搜索引擎操作的开源框架,全自动�
 # 版本要求 | Requirements
 
 - Java 17+
-- Spring Boot 3.x
-- Elasticsearch 8.x
+- Spring Boot 3.x / 4.x (同一个 3.2.0 构件同时支持,无需区分版本)
+- Elasticsearch 8.x (Elasticsearch Java Client 8.x)
+
+> **Spring Boot 4.x 用户请注意**:Spring Boot 4.x 的依赖管理默认把 Elasticsearch Java Client
+> 升到了 9.x(底层改用 Apache HttpClient 5),与本框架使用的 8.x 客户端 API 不兼容,
+> 启动时会报 `NoClassDefFoundError: org/apache/http/auth/Credentials`。
+> 在你项目的 `properties` 中固定客户端版本即可解决:
+>
+> ```xml
+> <properties>
+>     <elasticsearch-client.version>8.19.7</elasticsearch-client.version>
+> </properties>
+> ```
 
 # Latest Version: [![Maven Central](https://img.shields.io/github/v/release/xpc1024/easy-es?include_prereleases&logo=xpc&style=plastic)](https://search.maven.org/search?q=g:io.github.xpc1024%20a:easy-*)
 ---
