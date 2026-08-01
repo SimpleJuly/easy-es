@@ -86,7 +86,7 @@ public class IndexTest {
     public void testGetIndex() {
         GetIndexResponse response = documentMapper.getIndex();
         // 这里打印下索引结构信息 其它分片等信息皆可从indexResponse中取
-        response.result().forEach((k, v) -> System.out.println(k +": " + v));
+        response.indices().forEach((k, v) -> System.out.println(k +": " + v));
     }
 
     @Test

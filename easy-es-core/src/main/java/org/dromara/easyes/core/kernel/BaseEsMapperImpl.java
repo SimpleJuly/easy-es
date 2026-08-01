@@ -25,10 +25,11 @@ import co.elastic.clients.elasticsearch.sql.query.SqlFormat;
 import co.elastic.clients.json.JsonData;
 import co.elastic.clients.json.JsonpUtils;
 import co.elastic.clients.transport.TransportOptions;
-import co.elastic.clients.transport.rest_client.RestClientTransport;
+import co.elastic.clients.transport.rest5_client.Rest5ClientTransport;
+import co.elastic.clients.util.ApiTypeHelper;
 import lombok.Setter;
 import lombok.SneakyThrows;
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.dromara.easyes.annotation.rely.IdType;
 import org.dromara.easyes.annotation.rely.RefreshPolicy;
 import org.dromara.easyes.common.constants.BaseEsConstants;
@@ -44,8 +45,8 @@ import org.dromara.easyes.core.toolkit.EntityInfoHelper;
 import org.dromara.easyes.core.toolkit.IndexUtils;
 import org.dromara.easyes.core.toolkit.PageHelper;
 import org.dromara.easyes.core.toolkit.PrintUtils;
-import org.elasticsearch.client.Request;
-import org.elasticsearch.client.Response;
+import co.elastic.clients.transport.rest5_client.low_level.Request;
+import co.elastic.clients.transport.rest5_client.low_level.Response;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -188,7 +189,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         Request request = new Request(method, endpoint);
         request.setJsonEntity(dsl);
         PrintUtils.printDsl(method, endpoint, dsl);
-        Response response = ((RestClientTransport) client._transport()).restClient().performRequest(request);
+        Response response = ((Rest5ClientTransport) client._transport()).restClient().performRequest(request);
         return EntityUtils.toString(response.getEntity());
     }
 
@@ -218,7 +219,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
             SearchRequest.Builder builder = Optional.ofNullable(wrapper.searchBuilder)
                     .orElse(WrapperProcessor.buildSearchBuilder(wrapper, entityClass))
                     .index(WrapperProcessor.getIndexName(entityClass, wrapper.indexNames))
-                    .routing(wrapper.routing)
+                    .routing(routingList(wrapper.routing))
                     .preference(wrapper.preference);
             return builder.build().toString();
         } catch (Exception e) {
@@ -433,7 +434,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
 
             CountRequest req = CountRequest.of(a -> a
                     .index(WrapperProcessor.getIndexName(entityClass, wrapper.indexNames))
-                    .routing(wrapper.routing)
+                    .routing(routingList(wrapper.routing))
                     .preference(wrapper.preference)
                     .query(query._toQuery())
             );
@@ -612,6 +613,39 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         return Boolean.TRUE;
     }
 
+    /**
+     * es客户端9.x中请求对象的routing返回值为List,此处取首个值以适配批量操作构建器的单值入参
+     *
+     * @param routing 路由列表
+     * @return 路由值
+     */
+    private static String firstRouting(List<String> routing) {
+        return CollectionUtils.isEmpty(routing) ? null : normalizeRouting(routing.get(0));
+    }
+
+    /**
+     * es客户端9.x会将空字符串routing序列化为查询参数routing=,导致读写落在不同分片查不到数据
+     * 此处统一将空白routing归一化为null
+     *
+     * @param routing 路由值
+     * @return 归一化后的路由值,空白时为null
+     */
+    private static String normalizeRouting(String routing) {
+        return StringUtils.isBlank(routing) ? null : routing;
+    }
+
+    /**
+     * es客户端9.x中请求的routing为List类型,且其setter为可变参数形式,
+     * 传入null会生成[null]并序列化出空的routing=查询参数,导致读写落在不同分片查不到数据。
+     * 此处在routing为空白时返回客户端的"未定义列表",使该参数被彻底省略。
+     *
+     * @param routing 路由值
+     * @return 路由列表,空白时为未定义列表
+     */
+    private static List<String> routingList(String routing) {
+        return StringUtils.isBlank(routing) ? ApiTypeHelper.undefinedList() : Collections.singletonList(routing);
+    }
+
     @Override
     public Boolean setRequestOptions(TransportOptions requestOptions) {
         synchronized (this) {
@@ -720,7 +754,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         DeleteByQueryRequest request = DeleteByQueryRequest.of(a -> a
                 .index(WrapperProcessor.getIndexName(entityClass, wrapper.indexNames))
                 .query(getBoolQuery(wrapper)._toQuery())
-                .routing(wrapper.routing)
+                .routing(routingList(wrapper.routing))
                 .refresh(Refresh.True.equals(getRefreshPolicy()))
                 .scrollSize(entityInfo == null ? null : entityInfo.getMaxResultWindow().longValue())
         );
@@ -756,7 +790,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
                             .index(indexRequest.index())
                             .pipeline(indexRequest.pipeline())
                             .requireAlias(indexRequest.requireAlias())
-                            .routing(indexRequest.routing())
+                            .routing(firstRouting(indexRequest.routing()))
                             .version(indexRequest.version())
                             .versionType(indexRequest.versionType())
                             .document(indexRequest.document())
@@ -767,7 +801,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
 
         // 构建批量请求参数
         BulkRequest bulkRequest = BulkRequest.of(a -> a
-                .routing(routing)
+                .routing(routingList(routing))
                 .refresh(getRefreshPolicy())
                 .operations(operations)
         );
@@ -817,7 +851,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      */
     private Integer doDeleteById(Serializable id, String routing, String indexName) {
         DeleteRequest request = generateDelRequest(id, indexName)
-                .routing(routing)
+                .routing(routingList(routing))
                 .refresh(getRefreshPolicy())
                 .build();
 
@@ -851,7 +885,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
                             .ifPrimaryTerm(deleteRequest.ifPrimaryTerm())
                             .ifSeqNo(deleteRequest.ifSeqNo())
                             .index(deleteRequest.index())
-                            .routing(deleteRequest.routing())
+                            .routing(firstRouting(deleteRequest.routing()))
                             .version(deleteRequest.version())
                             .versionType(deleteRequest.versionType())
                     ));
@@ -859,7 +893,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         });
 
         BulkRequest request = BulkRequest.of(a -> a
-                .routing(routing)
+                .routing(routingList(routing))
                 .refresh(getRefreshPolicy())
                 .operations(operations)
         );
@@ -879,7 +913,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     private Integer doUpdateById(T entity, String idValue, String routing, String indexName) {
         // 构建更新请求参数
         UpdateRequest<T, T> updateRequest = buildUpdateRequest(entity, idValue, indexName)
-                .routing(routing)
+                .routing(routingList(routing))
                 .refresh(getRefreshPolicy())
                 .build();
 
@@ -920,7 +954,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         for (T item : list) {
             BulkOperation operation = BulkOperation.of(a -> a.update(b -> b
                     .index(indexName)
-                    .routing(updateWrapper.routing)
+                    .routing(normalizeRouting(updateWrapper.routing))
                     .id(getId(item))
                     .action(c -> {
                         Map<String, Object> map = new HashMap<>();
@@ -935,7 +969,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
 
         // 批量更新
         BulkRequest bulkRequest = BulkRequest.of(a -> a
-                .routing(updateWrapper.routing)
+                .routing(routingList(updateWrapper.routing))
                 .refresh(getRefreshPolicy())
                 .operations(operations)
         );
@@ -960,14 +994,14 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
                     a.update(b -> b
                             .id(updateRequest.id())
                             .index(updateRequest.index())
-                            .routing(updateRequest.routing())
+                            .routing(firstRouting(updateRequest.routing()))
                             .action(c->c.doc((updateRequest.doc())))
                     ));
             operations.add(operation);
         });
 
         BulkRequest request = BulkRequest.of(a -> a
-                .routing(routing)
+                .routing(routingList(routing))
                 .refresh(getRefreshPolicy())
                 .operations(operations)
         );
@@ -988,7 +1022,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         List<String> ids = idList.stream().map(Object::toString).collect(Collectors.toList());
         SearchRequest searchRequest = new SearchRequest.Builder()
                 .index(WrapperProcessor.getIndexName(entityClass, indexName))
-                .routing(routing)
+                .routing(routingList(routing))
                 .query(QueryBuilders.ids().values(ids).build()._toQuery())
                 .size(idList.size())
                 .build();
@@ -1017,7 +1051,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         // 构造查询参数
         SearchRequest searchRequest = new SearchRequest.Builder()
                 .index(indexName)
-                .routing(routing)
+                .routing(routingList(routing))
                 .query(QueryBuilders.ids().values(id.toString()).build()._toQuery())
                 .build();
         // 请求es获取数据
@@ -1060,7 +1094,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         SearchRequest.Builder builder = Optional.ofNullable(wrapper.searchBuilder)
                 .orElse(WrapperProcessor.buildSearchBuilder(wrapper, entityClass))
                 .index(WrapperProcessor.getIndexName(entityClass, wrapper.indexNames))
-                .routing(wrapper.routing)
+                .routing(routingList(wrapper.routing))
                 .preference(wrapper.preference);
 
         if (needSearchAfter && CollectionUtils.isNotEmpty(searchAfter)) {
@@ -1096,7 +1130,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         // 构建查询条件
         SearchRequest.Builder builder = new SearchRequest.Builder()
                 .index(indexName)
-                .routing(wrapper.routing)
+                .routing(routingList(wrapper.routing))
                 .preference(wrapper.preference);
 
         if (!Objects.isNull(wrapper.searchBuilder)) {
@@ -1420,7 +1454,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      */
     private IndexRequest.Builder<T> buildIndexRequest(T entity, String routing, String parentId, String indexName) {
         IndexRequest.Builder<T> indexRequest = new IndexRequest.Builder<T>()
-                .routing(routing)
+                .routing(routingList(routing))
                 .index(indexName);
         // id预处理,除下述情况,其它情况使用es默认的id
         EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
@@ -1531,7 +1565,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         SearchRequest searchRequest = Optional.ofNullable(wrapper.searchBuilder)
                 .orElse(WrapperProcessor.buildSearchBuilder(wrapper, entityClass))
                 .index(WrapperProcessor.getIndexName(entityClass, wrapper.indexNames))
-                .routing(wrapper.routing)
+                .routing(routingList(wrapper.routing))
                 .preference(wrapper.preference)
                 .build();
 

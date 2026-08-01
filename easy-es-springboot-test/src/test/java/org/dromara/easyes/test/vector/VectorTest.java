@@ -55,7 +55,7 @@ public class VectorTest {
                 .script(d -> d
                         .lang("painless")
                         .params("vectors", JsonData.of(new double[]{0.39684247970581055, 0.7687071561813354, 0.5145490765571594}))
-                        .source("cosineSimilarity(params.vectors, 'vectors') + 1.0")
+                        .source(s -> s.scriptString("cosineSimilarity(params.vectors, 'vectors') + 1.0"))
                 )
         ));
 

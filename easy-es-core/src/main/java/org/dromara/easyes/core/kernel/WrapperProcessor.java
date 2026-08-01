@@ -842,7 +842,7 @@ public class WrapperProcessor {
                         .type(highLightParam.getHighLightType().getValue())
                         .requireFieldMatch(highLightParam.getRequireFieldMatch())
                 );
-                highlightBuilder.fields(highlightField, field);
+                highlightBuilder.fields(NamedValue.of(highlightField, field));
                 highlightBuilder.fragmentSize(highLightParam.getFragmentSize());
                 highlightBuilder.noMatchSize(highLightParam.getNoMatchSize());
                 Optional.ofNullable(highLightParam.getNumberOfFragments()).ifPresent(highlightBuilder::numberOfFragments);
@@ -1153,7 +1153,7 @@ public class WrapperProcessor {
                 .query(q -> q.matchAll(ma -> ma))
                 // 定义脚本和参数
                 .script(s -> s
-                        .source(scriptSource)
+                        .source(src -> src.scriptString(scriptSource))
                         .params(params)
                 )
         );

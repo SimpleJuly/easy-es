@@ -4,12 +4,12 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
-import co.elastic.clients.transport.rest_client.RestClientOptions;
+import co.elastic.clients.transport.rest5_client.Rest5ClientOptions;
 import org.dromara.easyes.core.conditions.select.LambdaEsQueryWrapper;
 import org.dromara.easyes.test.TestEasyEsApplication;
 import org.dromara.easyes.test.entity.Document;
 import org.dromara.easyes.test.mapper.DocumentMapper;
-import org.elasticsearch.client.RequestOptions;
+import co.elastic.clients.transport.rest5_client.low_level.RequestOptions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +32,7 @@ public class CompareTest {
     @Autowired
     private ElasticsearchClient client;
 
-    public static RestClientOptions options = new RestClientOptions(RequestOptions.DEFAULT, true);
+    public static Rest5ClientOptions options = new Rest5ClientOptions(RequestOptions.DEFAULT, true);
 
     @Test
     public void testCompare() {

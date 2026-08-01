@@ -2,7 +2,9 @@ package org.dromara.easyes.test.performance;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.*;
+import co.elastic.clients.elasticsearch.core.search.HighlightField;
 import co.elastic.clients.elasticsearch.core.search.Hit;
+import co.elastic.clients.util.NamedValue;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
 import org.dromara.easyes.core.conditions.select.LambdaEsQueryWrapper;
@@ -70,7 +72,8 @@ public class PerformanceTest {
                         )
                 ))
                 .highlight(a -> a
-                        .fields("title", b -> b.preTags("<em>").postTags("</em>"))
+                        .fields(NamedValue.of("title",
+                                HighlightField.of(b -> b.preTags("<em>").postTags("</em>"))))
                 )
                 .size(DEFAULT_SIZE);
 

@@ -272,7 +272,7 @@ public class IndexUtils {
     public static EsIndexInfo parseGetIndexResponse(GetIndexResponse getIndexResponse, String indexName) {
         EsIndexInfo esIndexInfo = new EsIndexInfo();
 
-        IndexState indexState = getIndexResponse.result().get(indexName);
+        IndexState indexState = getIndexResponse.indices().get(indexName);
         Map<String, Alias> aliases = indexState.aliases();
         IndexSettings settings = indexState.settings();
         TypeMapping mappings = indexState.mappings();

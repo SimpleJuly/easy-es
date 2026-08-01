@@ -171,7 +171,7 @@ public class HighTest {
         wrapper.match(Document::getContent, "技术");
         wrapper.sort(SortOptions.of(a -> a.script(b -> b
                 .type(ScriptSortType.Number)
-                .script(c -> c.source("Math.random()"))
+                .script(c -> c.source(s -> s.scriptString("Math.random()")))
         )));
         List<Document> documents = documentMapper.selectList(wrapper);
         System.out.println(documents);

@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.3.0] - 2026-08-01
+
+### Changed (breaking)
+- **Migrated to Elasticsearch Java Client 9.4.2** (from 8.19.7). Transport switched from
+  `RestClientTransport` (Apache HttpClient 4) to `Rest5ClientTransport` (Apache HttpClient 5).
+  - `EsClientUtils` rewritten against HttpClient 5: credentials, connection pooling
+    (now via `PoolingAsyncClientConnectionManagerBuilder`), TLS, timeouts and interceptors.
+  - Renamed client APIs adopted: `Script.source(String)` → `source(s -> s.scriptString(...))`,
+    `GetIndexResponse.result()` → `indices()`, `Highlight.fields(String, fn)` →
+    `fields(NamedValue.of(...))`, `RestClientOptions` → `Rest5ClientOptions`.
+  - This aligns the library with Spring Boot 4.x's managed `elasticsearch-client.version`,
+    so **Spring Boot 4.x projects now work with no extra configuration**.
+  - **Spring Boot 3.x projects must pin** `<elasticsearch-client.version>9.4.2</elasticsearch-client.version>`,
+    or stay on 3.2.0.
+
+### Fixed
+- Blank routing is no longer sent as an empty `routing=` query parameter. The 9.x client models
+  `routing` as a list with a varargs setter, so passing `null` produced `[null]` and serialized
+  `routing=`, which silently routed reads and writes to different shards and made queries return
+  nothing. Blank routing now resolves to the client's undefined-list so the parameter is omitted.
+
+### Verified
+- `AllTest` (81 tests) passes against a live Elasticsearch 9.0.3.
+- End-to-end consumer smoke tests (create index → insert → query → delete → drop index) against a
+  live Elasticsearch: Spring Boot 4.1.0 with no extra config, and Spring Boot 3.5.7 with the
+  client version pinned to 9.4.2.
+
 ## [3.2.0] - 2026-07-11
 
 ### Upgraded

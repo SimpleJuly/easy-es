@@ -2,7 +2,7 @@ package org.dromara.easyes.core.biz;
 
 import co.elastic.clients.elasticsearch.indices.IndexSettings;
 import co.elastic.clients.transport.TransportOptions;
-import co.elastic.clients.transport.rest_client.RestClientOptions;
+import co.elastic.clients.transport.rest5_client.Rest5ClientOptions;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import org.dromara.easyes.annotation.rely.IdType;
@@ -12,7 +12,7 @@ import org.dromara.easyes.common.constants.BaseEsConstants;
 import org.dromara.easyes.annotation.Settings;
 import org.dromara.easyes.annotation.rely.ISettingsProvider;
 import org.dromara.easyes.common.utils.StringUtils;
-import org.elasticsearch.client.RequestOptions;
+import co.elastic.clients.transport.rest5_client.low_level.RequestOptions;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -197,7 +197,7 @@ public class EntityInfo {
     /**
      * 请求配置 默认值为官方内置的默认配置
      */
-    private TransportOptions requestOptions = new RestClientOptions(RequestOptions.DEFAULT, true);
+    private TransportOptions requestOptions = new Rest5ClientOptions(RequestOptions.DEFAULT, true);
     /**
      * 最大返回数
      */

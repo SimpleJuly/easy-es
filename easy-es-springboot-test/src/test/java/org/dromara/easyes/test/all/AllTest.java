@@ -9,7 +9,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.json.JsonData;
-import co.elastic.clients.transport.rest_client.RestClientOptions;
+import co.elastic.clients.transport.rest5_client.Rest5ClientOptions;
 import org.dromara.easyes.common.constants.BaseEsConstants;
 import org.dromara.easyes.core.biz.EntityInfo;
 import org.dromara.easyes.core.biz.EsPageInfo;
@@ -24,8 +24,8 @@ import org.dromara.easyes.core.toolkit.FieldUtils;
 import org.dromara.easyes.test.TestEasyEsApplication;
 import org.dromara.easyes.test.entity.Document;
 import org.dromara.easyes.test.mapper.DocumentMapper;
-import org.elasticsearch.client.HttpAsyncResponseConsumerFactory;
-import org.elasticsearch.client.RequestOptions;
+import co.elastic.clients.transport.rest5_client.low_level.HttpAsyncResponseConsumerFactory;
+import co.elastic.clients.transport.rest5_client.low_level.RequestOptions;
 import org.elasticsearch.geometry.Circle;
 import org.elasticsearch.geometry.Point;
 import org.elasticsearch.geometry.Rectangle;
@@ -925,7 +925,7 @@ public class AllTest {
                 .script(d -> d
                         .lang("painless")
                         .params("vectors", JsonData.of(new double[]{0.39684247970581055, 0.7687071561813354, 0.5145490765571594}))
-                        .source("cosineSimilarity(params.vectors, 'vectors') + 1.0")
+                        .source(s -> s.scriptString("cosineSimilarity(params.vectors, 'vectors') + 1.0"))
                 )
         ));
         SearchRequest.Builder searchSourceBuilder = new SearchRequest.Builder();
@@ -943,8 +943,8 @@ public class AllTest {
         // 可设置自定义请求参数,覆盖默认配置, 解决报错 entity content is too long [168583249] for the configured buffer limit [104857600]
         RequestOptions.Builder builder = RequestOptions.DEFAULT.toBuilder();
         builder.setHttpAsyncResponseConsumerFactory(
-                new HttpAsyncResponseConsumerFactory.HeapBufferedResponseConsumerFactory(4 * 104857600));
-        Boolean success = documentMapper.setRequestOptions(new RestClientOptions(builder.build(), true));
+                new HttpAsyncResponseConsumerFactory.BasicAsyncResponseConsumerFactory(4 * 104857600));
+        Boolean success = documentMapper.setRequestOptions(new Rest5ClientOptions(builder.build(), true));
         Assertions.assertTrue(success);
     }
 
