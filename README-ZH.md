@@ -128,6 +128,17 @@ Easy-Es是一款简化ElasticSearch搜索引擎操作的开源框架,全自动�
 | **3.3.0** | 9.x | 开箱即用 | 需固定客户端版本(见下) |
 | 3.2.0 | 8.x | 需固定客户端版本 | 开箱即用 |
 
+> **先分清"服务端"和"客户端"两件事**,下表只关乎**客户端库**版本。
+>
+> **Elasticsearch 服务端 8.x / 9.x 两个版本,上面两个 easy-es 版本都能连**——
+> Elasticsearch 9.x 服务端声明 `minimum_wire_compatibility_version: 8.18.0`,
+> 官方接受 8.18+ 的客户端。已实测:Spring Boot 3.x + easy-es 3.2.0(8.x 客户端)
+> 连 Elasticsearch 9.0.3 服务端,增删改查全部正常,无需任何额外配置。
+>
+> 换言之:**用 Spring Boot 3.x 又想连 ES 9.x 服务端,直接用 3.2.0 即可。**
+> 只有当你确实需要 ES 9.x **客户端库**本身(例如要用 9.x 客户端独有的 API)时,
+> 才需要下面的版本对齐。
+
 版本选择的依据是 Spring Boot 自身依赖管理里的 `elasticsearch-client.version`:
 Spring Boot 4.x 默认 9.x,Spring Boot 3.x 默认 8.x。二者的客户端 API 二进制不兼容
 (底层分别是 Apache HttpClient 5 与 HttpClient 4),因此需要和 easy-es 对齐。
