@@ -2,6 +2,28 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 版本线(既定策略,勿擅自变更)
+
+本仓库并行维护两条版本线,按使用方的 Spring Boot 版本区分:
+
+| 版本 | 面向 | ES Java Client | 分支 |
+|---|---|---|---|
+| **3.2.0** | Spring Boot 3.x | 8.19.7 | `release/3.2.0` |
+| **3.3.0** | Spring Boot 4.x | 9.4.2 | `release/3.3.0` = `main` |
+
+- 两条线**功能完全等价**;3.3.0 相对 3.2.0 只改了 5 个 ES9 客户端适配文件
+  (`EsClientUtils`、`BaseEsMapperImpl`、`WrapperProcessor`、`IndexUtils`、`EntityInfo`),没有新功能。
+- 版本线之所以按 Spring Boot 划分,是因为 Spring Boot 的依赖管理会锁定
+  `elasticsearch-client.version`(SB3 默认 8.18.8,SB4 默认 9.4.2),而 8.x 与 9.x 客户端
+  二进制不兼容(底层分别是 Apache HttpClient 4 与 5)。**消费方 BOM 的 dependencyManagement
+  永远优先于传递依赖,easy-es 无法从自己的 pom 覆盖**——已验证:即使在 starter 中显式写死
+  版本也无效。交叉使用只能由使用方在自己的 `properties` 中固定该版本。
+- **注意区分「ES 服务端版本」与「ES 客户端库版本」**:上表只关乎客户端库。
+  Spring Boot 3.x + 3.2.0(8.x 客户端)连 **Elasticsearch 9.x 服务端是零配置可用的**,
+  因为 ES 9.x 服务端声明 `minimum_wire_compatibility_version: 8.18.0`。已实测全链路 CRUD 通过。
+- 新功能/修复若需同时进两条线,目前靠手动同步。当这种同步频繁到成为负担时,
+  再考虑把上述 5 处差异抽成兼容层 + Maven profile 双构建(单源码出两个构件)。
+
 ## Build & Test Commands
 
 ```bash
