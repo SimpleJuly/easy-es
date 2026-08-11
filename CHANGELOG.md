@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [3.3.0] - 2026-08-01
 
+### Added
+- Added `easy-es-boot4-starter` as the explicit Spring Boot 4 entry point. The existing
+  `easy-es-boot-starter` remains the Spring Boot 3 entry point and maps to the synchronized 3.2.x
+  runtime, keeping Elasticsearch Java Client 8.x. The Boot 4 starter uses the current 3.3.x runtime
+  and Elasticsearch Java Client 9.x.
+- Added a Spring Boot 3.5.7 compatibility test module that verifies the created client uses the
+  Elasticsearch 8.x `RestClientTransport`.
+- Release ordering is explicit: publish the synchronized 3.2.x runtime artifacts before publishing
+  the 3.3.x starters that reference them.
+
 ### Changed (breaking)
 - **Migrated to Elasticsearch Java Client 9.4.2** (from 8.19.7). Transport switched from
   `RestClientTransport` (Apache HttpClient 4) to `Rest5ClientTransport` (Apache HttpClient 5).
@@ -14,8 +24,8 @@ All notable changes to this project will be documented in this file.
     `fields(NamedValue.of(...))`, `RestClientOptions` → `Rest5ClientOptions`.
   - This aligns the library with Spring Boot 4.x's managed `elasticsearch-client.version`,
     so **Spring Boot 4.x projects now work with no extra configuration**.
-  - **Spring Boot 3.x projects must pin** `<elasticsearch-client.version>9.4.2</elasticsearch-client.version>`,
-    or stay on 3.2.0.
+  - Spring Boot 3.x projects should continue using `easy-es-boot-starter`, which selects the
+    synchronized ES Client 8.x runtime without requiring an ES Client 9.x override.
 
 ### Fixed
 - Blank routing is no longer sent as an empty `routing=` query parameter. The 9.x client models

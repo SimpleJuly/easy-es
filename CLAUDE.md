@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 版本 | 面向 | ES Java Client | 分支 |
 |---|---|---|---|
 | **3.2.0** | Spring Boot 3.x | 8.19.7 | `release/3.2.0` |
-| **3.3.0** | Spring Boot 4.x | 9.4.2 | `release/3.3.0` = `main` |
+| **3.3.x** | Spring Boot 4.x / 3.x 显式入口 | Boot 4: 9.4.2；Boot 3: 8.x | `release/3.3.0` = `main` |
 
 - 两条线**功能完全等价**;3.3.0 相对 3.2.0 只改了 5 个 ES9 客户端适配文件
   (`EsClientUtils`、`BaseEsMapperImpl`、`WrapperProcessor`、`IndexUtils`、`EntityInfo`),没有新功能。
@@ -23,6 +23,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   因为 ES 9.x 服务端声明 `minimum_wire_compatibility_version: 8.18.0`。已实测全链路 CRUD 通过。
 - 新功能/修复若需同时进两条线,目前靠手动同步。当这种同步频繁到成为负担时,
   再考虑把上述 5 处差异抽成兼容层 + Maven profile 双构建(单源码出两个构件)。
+- 3.3.x 中，原 `easy-es-boot-starter` 是 Boot 3 入口，通过
+  自身的 dependencyManagement 将 Easy-ES 内部模块锁定到 `easy-es.boot3-runtime.version`，
+  并将客户端锁定到 `easy-es.boot3-client.version`，保证使用完整的 3.2.x / ES Client 8.x 链；
+  `easy-es-boot4-starter` 是 Boot 4 入口，使用当前 3.3.x 实现线和 ES Client 9.x。
+  发版时必须先发布映射所指向的 3.2.x 全套构件，再发布 3.3.x，并执行两个 Boot 版本的兼容测试。
 
 ## Build & Test Commands
 
@@ -54,7 +59,8 @@ easy-es-common/          # Constants, enums, exceptions, EasyEsProperties, share
 easy-es-extension/       # Extension interfaces and base abstractions
 easy-es-core/            # Core engine (see below)
 easy-es-spring/          # Spring Framework integration (beans, AOP, context)
-easy-es-boot-starter/    # Spring Boot auto-configuration entry point
+easy-es-boot-starter/    # Spring Boot 3 + ES Client 8.x 入口及共享自动配置源码
+easy-es-boot4-starter/  # Spring Boot 4 显式入口
 easy-es-solon-plugin/    # Solon framework integration (alternative to Spring Boot)
 easy-es-springboot-test/ # Integration tests with Spring Boot
 easy-es-solon-test/      # Integration tests with Solon
@@ -90,7 +96,7 @@ Strategy is selected via `easy-es.global-config.process-index-mode` in configura
 `LambdaEsQueryWrapper` → `WrapperProcessor` → `SearchRequest.Builder` → Elasticsearch Java Client (`co.elastic.clients`). The processor handles keyword suffix inference, nested query wrapping, geo queries, aggregations, and highlighting.
 
 ### Framework Integration Points
-- **Spring Boot**: `easy-es-boot-starter` provides `@EnableEasyEs` and auto-configuration via `EasyEsAutoConfiguration`. Mappers are registered as Spring beans.
+- **Spring Boot**: use `easy-es-boot-starter` for Boot 3/ES Client 8.x and `easy-es-boot4-starter` for Boot 4/ES Client 9.x. The Boot 4 module compiles the shared auto-configuration sources with its own dependency line.
 - **Solon**: `easy-es-solon-plugin` provides equivalent integration for the Solon framework.
 - Both integrations share the same `easy-es-core` and `easy-es-spring` logic.
 

@@ -11,6 +11,52 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>easy-es-boot-starter</artifactId>
+    <name>easy-es-boot-starter</name>
+    <description>Easy-ES starter for Spring Boot 3.x and Elasticsearch Java Client 8.x</description>
+
+    <!--
+      覆盖 3.3 parent 的 ES9 依赖管理，保证本构件在 reactor、发布 POM 和消费方中
+      始终解析为完整的 3.2.x / ES Client 8.x 运行链。
+    -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.dromara.easy-es</groupId>
+                <artifactId>easy-es-annotation</artifactId>
+                <version>${easy-es.boot3-runtime.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.dromara.easy-es</groupId>
+                <artifactId>easy-es-common</artifactId>
+                <version>${easy-es.boot3-runtime.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.dromara.easy-es</groupId>
+                <artifactId>easy-es-extension</artifactId>
+                <version>${easy-es.boot3-runtime.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.dromara.easy-es</groupId>
+                <artifactId>easy-es-core</artifactId>
+                <version>${easy-es.boot3-runtime.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.dromara.easy-es</groupId>
+                <artifactId>easy-es-spring</artifactId>
+                <version>${easy-es.boot3-runtime.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>co.elastic.clients</groupId>
+                <artifactId>elasticsearch-java</artifactId>
+                <version>${easy-es.boot3-client.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.elasticsearch</groupId>
+                <artifactId>elasticsearch-geo</artifactId>
+                <version>${easy-es.boot3-client.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
@@ -21,7 +67,7 @@
             <groupId>org.dromara.easy-es</groupId>
             <artifactId>easy-es-spring</artifactId>
         </dependency>
-        <!-- 由宿主应用提供,不向下游传递版本,保证同时兼容Spring Boot 3.x与4.x -->
+        <!-- 由 Spring Boot 3 宿主应用提供，不向下游传递当前构建使用的 Boot 4 版本。 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-autoconfigure</artifactId>

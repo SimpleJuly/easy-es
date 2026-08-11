@@ -90,12 +90,24 @@ String indexName = "document";
 
 - Requirements
   - Java 17+
-  - Spring Boot 3.x
-  - Elasticsearch 8.x
+  - Spring Boot 3.x / 4.x
+  - Elasticsearch Java Client 8.x (Boot 3) / 9.x (Boot 4)
 
 - Add Easy-Es dependency
 
-    - Maven:
+    - Spring Boot 4 / Maven:
+      ```xml
+      <dependency>
+        <groupId>org.dromara.easy-es</groupId>
+        <artifactId>easy-es-boot4-starter</artifactId>
+        <version>Latest Version</version>
+      </dependency>
+      ```
+    - Gradle
+      ```groovy
+      implementation group: 'org.dromara.easy-es', name: 'easy-es-boot4-starter', version: 'Latest Version'
+      ```
+    - Spring Boot 3 / Maven:
       ```xml
       <dependency>
         <groupId>org.dromara.easy-es</groupId>
@@ -103,10 +115,8 @@ String indexName = "document";
         <version>Latest Version</version>
       </dependency>
       ```
-    - Gradle
-      ```groovy
-      compile group: 'org.dromara.easy-es', name: 'easy-es-boot-starter', version: 'Latest Version'
-      ```
+
+      The original starter selects the synchronized 3.2.x runtime and Elasticsearch Java Client 8.x.
 -   Add mapper file extends BaseEsMapper interface
 
     ```java

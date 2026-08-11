@@ -123,10 +123,11 @@ Easy-Es是一款简化ElasticSearch搜索引擎操作的开源框架,全自动�
 
 **版本选择:**
 
-| easy-es | ES Java Client | Spring Boot 4.x | Spring Boot 3.x |
+| easy-es | 推荐 Starter | ES Java Client | 说明 |
 |---|---|---|---|
-| **3.3.0** | 9.x | 开箱即用 | 需固定客户端版本(见下) |
-| 3.2.0 | 8.x | 需固定客户端版本 | 开箱即用 |
+| **3.3.x + Boot 4** | `easy-es-boot4-starter` | 9.x | 开箱即用 |
+| **3.3.x + Boot 3** | `easy-es-boot-starter` | 8.x | 映射到同步维护的 3.2.x 运行时 |
+| 3.2.x + Boot 3 | `easy-es-boot-starter` | 8.x | 旧版本线，开箱即用 |
 
 > **先分清"服务端"和"客户端"两件事**,下表只关乎**客户端库**版本。
 >
@@ -143,20 +144,21 @@ Easy-Es是一款简化ElasticSearch搜索引擎操作的开源框架,全自动�
 Spring Boot 4.x 默认 9.x,Spring Boot 3.x 默认 8.x。二者的客户端 API 二进制不兼容
 (底层分别是 Apache HttpClient 5 与 HttpClient 4),因此需要和 easy-es 对齐。
 
-> **Spring Boot 3.x 使用 3.3.0 时**,请在项目 `properties` 中固定客户端版本,
-> 否则启动会报 `NoClassDefFoundError: org/apache/hc/client5/http/auth/Credentials`:
->
-> ```xml
-> <properties>
->     <elasticsearch-client.version>9.4.2</elasticsearch-client.version>
-> </properties>
-> ```
->
-> 若不希望改动依赖版本,Spring Boot 3.x 项目可继续使用 3.2.0。
+Spring Boot 3 用户继续使用原来的 `easy-es-boot-starter`。该入口会选择同步维护的 3.2.x
+实现线及 ES Client 8.x。Spring Boot 4 则使用 `easy-es-boot4-starter` 和 ES Client 9.x。
 
 # Latest Version: [![Maven Central](https://img.shields.io/github/v/release/xpc1024/easy-es?include_prereleases&logo=xpc&style=plastic)](https://search.maven.org/search?q=g:io.github.xpc1024%20a:easy-*)
 ---
-**Maven:**
+**Spring Boot 4（推荐）:**
+``` xml
+<dependency>
+    <groupId>org.dromara.easy-es</groupId>
+    <artifactId>easy-es-boot4-starter</artifactId>
+    <version>Latest Version</version>
+</dependency>
+```
+
+**Spring Boot 3:**
 ``` xml
 <dependency>
     <groupId>org.dromara.easy-es</groupId>
@@ -164,10 +166,8 @@ Spring Boot 4.x 默认 9.x,Spring Boot 3.x 默认 8.x。二者的客户端 API �
     <version>Latest Version</version>
 </dependency>
 ```
-**Gradle:**
-```groovy
-compile group: 'org.dromara.easy-es', name: 'easy-es-boot-starter', version: 'Latest Version'
-```
+
+不要同时引入 `easy-es-boot-starter` 和 `easy-es-boot4-starter`。
 
 # 荣誉 | Honour
 

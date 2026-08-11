@@ -17,6 +17,7 @@
         <module>easy-es-spring-test</module>
         <module>easy-es-springboot-sample</module>
         <module>easy-es-springboot-test</module>
+        <module>easy-es-springboot3-test</module>
 
     </modules>
 
@@ -31,6 +32,11 @@
             <dependency>
                 <groupId>org.dromara.easy-es</groupId>
                 <artifactId>easy-es-boot-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.dromara.easy-es</groupId>
+                <artifactId>easy-es-boot4-starter</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
